@@ -1,0 +1,33 @@
+*** Generate code for user-defined function: 0x53717ff5 <String[6]: FactIf> ***
+--- AST ---
+FUNC
+. NAME "FactIf"
+. INFERRED NAME ""
+. PARAMS
+. . VAR (mode = VAR) "n"
+. DECLS
+. . VAR (mode = VAR) "p"
+. BLOCK INIT
+. IF
+. . GT
+. . . VAR PROXY parameter[0] (mode = VAR) "n"
+. . . LITERAL 1
+. THEN
+. . BLOCK
+. . . ASSIGN
+. . . . VAR PROXY local[0] (mode = VAR) "p"
+. . . . MUL
+. . . . . VAR PROXY parameter[0] (mode = VAR) "n"
+. . . . . CALL
+. . . . . . VAR PROXY (mode = DYNAMIC_GLOBAL) "FactIf"
+. . . . . . SUB
+. . . . . . . VAR PROXY parameter[0] (mode = VAR) "n"
+. . . . . . . LITERAL 1
+. ELSE
+. . BLOCK
+. . . ASSIGN
+. . . . VAR PROXY local[0] (mode = VAR) "p"
+. . . . LITERAL 1
+. RETURN
+. . VAR PROXY local[0] (mode = VAR) "p"
+

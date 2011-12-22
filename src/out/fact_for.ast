@@ -1,0 +1,37 @@
+*** Generate code for user-defined function: 0x5d9181ed <String[7]: FactFor> ***
+--- AST ---
+FUNC
+. NAME "FactFor"
+. INFERRED NAME ""
+. PARAMS
+. . VAR (mode = VAR) "n"
+. DECLS
+. . VAR (mode = VAR) "p"
+. . VAR (mode = VAR) "i"
+. BLOCK INIT
+. . INIT_VAR
+. . . VAR PROXY local[1] (mode = VAR) "p"
+. . . LITERAL 1
+. FOR
+. . INIT
+. . . BLOCK INIT
+. . . . INIT_VAR
+. . . . . VAR PROXY local[0] (mode = VAR) "i"
+. . . . . LITERAL 1
+. . COND
+. . . LTE
+. . . . VAR PROXY local[0] (mode = VAR) "i"
+. . . . VAR PROXY parameter[0] (mode = VAR) "n"
+. . BODY
+. . . BLOCK
+. . . . ASSIGN
+. . . . . VAR PROXY local[1] (mode = VAR) "p"
+. . . . . MUL
+. . . . . . VAR PROXY local[1] (mode = VAR) "p"
+. . . . . . VAR PROXY local[0] (mode = VAR) "i"
+. . NEXT
+. . . POST INC
+. . . . VAR PROXY local[0] (mode = VAR) "i"
+. RETURN
+. . VAR PROXY local[1] (mode = VAR) "p"
+

@@ -1,0 +1,30 @@
+Timing results:
+                Block building -   0.441 ms / 15.1 %     29664 bytes / 30.4 %
+                Block ordering -   0.011 ms /  0.4 %       256 bytes /  0.3 %
+             Assign dominators -   0.004 ms /  0.1 %         0 bytes /  0.0 %
+   Propagate deoptimizing mark -   0.001 ms /  0.0 %         0 bytes /  0.0 %
+     Redundant phi elimination -   0.018 ms /  0.6 %       920 bytes /  0.9 %
+   Unreachable phi elimination -   0.003 ms /  0.1 %       280 bytes /  0.3 %
+         Infer representations -   0.017 ms /  0.6 %       100 bytes /  0.1 %
+     MarkDeoptimizeOnUndefined -   0.000 ms /  0.0 %         0 bytes /  0.0 %
+ Insert representation changes -   0.031 ms /  1.1 %      2452 bytes /  2.5 %
+               Inferring types -   0.014 ms /  0.5 %        84 bytes /  0.1 %
+                  Canonicalize -   0.006 ms /  0.2 %        48 bytes /  0.0 %
+        Global value numbering -   0.068 ms /  2.3 %      5912 bytes /  6.1 %
+                Range analysis -   0.029 ms /  1.0 %      1856 bytes /  1.9 %
+        Replace checked values -   0.005 ms /  0.2 %         0 bytes /  0.0 %
+                Building chunk -   0.181 ms /  6.2 %     24076 bytes / 24.7 %
+          Register constraints -   0.122 ms /  4.2 %      7724 bytes /  7.9 %
+                  Resolve phis -   0.007 ms /  0.2 %       712 bytes /  0.7 %
+             Build live ranges -   0.298 ms / 10.2 %     19208 bytes / 19.7 %
+    Allocate general registers -   0.414 ms / 14.2 %      1152 bytes /  1.2 %
+     Allocate double registers -   0.024 ms /  0.8 %        64 bytes /  0.1 %
+         Populate pointer maps -   0.032 ms /  1.1 %        52 bytes /  0.1 %
+                Connect ranges -   0.007 ms /  0.2 %        88 bytes /  0.1 %
+          Resolve control flow -   0.017 ms /  0.6 %        56 bytes /  0.1 %
+             Mark empty blocks -   0.007 ms /  0.2 %         0 bytes /  0.0 %
+               Code generation -   1.159 ms / 39.7 %      2740 bytes /  2.8 %
+                           Sum -   8.048 ms           268955.946 bytes
+---------------------------------------------------------------
+                         Total -   3.449 ms (29.7 times slower than full code gen)
+
