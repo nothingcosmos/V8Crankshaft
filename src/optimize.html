@@ -1,0 +1,229 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Crankshaft optimize &mdash; V8 Crankshaft Overview 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/print.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/theme_extras.js"></script>
+    <link rel="top" title="V8 Crankshaft Overview 1.0 documentation" href="../index.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="../index.html">
+          <span>V8 Crankshaft Overview 1.0 documentation</span></a></h1>
+        <h2 class="heading"><span>Crankshaft optimize</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="crankshaft-optimize">
+<h1>Crankshaft optimize<a class="headerlink" href="#crankshaft-optimize" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="makecrankshaftcode">
+<h2>MakeCrankshaftCode<a class="headerlink" href="#makecrankshaftcode" title="Permalink to this headline">¶</a></h2>
+<p>コンパイルのメイン処理</p>
+<div class="highlight-python"><pre>Handle&lt;Context&gt; global_context(info-&gt;closure()-&gt;context()-&gt;global_context());
+TypeFeedbackOracle oracle(code, global_context, info-&gt;isolate());
+HGraphBuilder builder(info, &amp;oracle);
+HPhase phase(HPhase::kTotal);
+HGraph* graph = builder.CreateGraph();                     &lt;-- high-level
+
+if (graph != NULL &amp;&amp; FLAG_build_lithium) {
+  Handle&lt;Code&gt; optimized_code = graph-&gt;Compile(info);      &lt;-- low-level
+  if (!optimized_code.is_null()) {
+    info-&gt;SetCode(optimized_code);
+    FinishOptimization(info-&gt;closure(), start);
+    return true;
+  }
+}</pre>
+</div>
+</div>
+<div class="section" id="builder-creategraph">
+<h2>builder.CreateGraph()<a class="headerlink" href="#builder-creategraph" title="Permalink to this headline">¶</a></h2>
+<p>大まかな流れ</p>
+<div class="highlight-python"><pre>//graph_の生成
+graph_ = HGraph(info())
+
+current_block_ = graph()-&gt;entry_block();
+
+HBasicBlock* body_entry = CreateBasicBlock(initial_env);
+current_block()-&gt;Goto(body_entry);
+
+VisitDeclarations();
+AddSimulate();
+VisitStatements();
+
+graph()-&gt;OrderBlocks();
+graph()-&gt;AssignDominators();
+
+graph()-&gt;PropagateDeoptimizingMark();
+graph()-&gt;EliminateRedundantPhis();
+graph()-&gt;EliminateUnreachablePhis();
+graph()-&gt;CollectPhis();
+
+HInferRepresentation rep(graph());
+rep.Analyze()
+
+graph()-&gt;MarkDeoptimizeOnUndefined();
+graph()-&gt;InsertRepresentationChanges();
+
+graph()-&gt;InitializeInferredTypes();
+graph()-&gt;Canonicalize();
+
+HGlobalValueNumberer gvn()       &lt;-- GVN
+gvn.Analyze()
+  LoopInvariantCodeMotion()      &lt;-- LICM
+  AnalyzeBlock()
+
+HRangeAnalysis rangeAnalysis(graph());
+rangeAnalysis.Analyze();
+
+graph()-&gt;ComputeMinusZeroChecks();
+
+HStackCheckLiminator sce(graph());
+sce.Process();
+
+graph()-&gt;ReplacedCheckedValues();</pre>
+</div>
+</div>
+<div class="section" id="hgraph-compile">
+<h2>HGraph::Compile()<a class="headerlink" href="#hgraph-compile" title="Permalink to this headline">¶</a></h2>
+<p>Compile()は、low-level向けの最適化およびコード生成まで行う</p>
+<p>lithiumが主役かな。各アーキテクチャ依存の処理を行う。</p>
+<p>大まかな流れ</p>
+<div class="highlight-python"><pre>LAllocator allocator();
+LChunkBuilder builder(info, this, &amp;allocator);
+LChunk* chunk = builder.Build();
+
+allocator.Allocate(chunk);
+
+MacroAssembler assembler(info ...);
+LCodeGen generator(chunk, &amp;assembler, info);
+
+generator.Generatecode();
+CodeGenerator::MarkCodePrologu(info);
+code = CodeGenerator::MarkCodeEpilogue(&amp;assembler, flags, info);
+generator.FinishCode(code)
+CodeGenerator::PrintCode(code, info);</pre>
+</div>
+</div>
+</div>
+<div class="section" id="optimize">
+<h1>Optimizeの詳細<a class="headerlink" href="#optimize" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="hglobalvaluenumberer-analyzeblock">
+<h2>HGlobalValueNumberer::AnalyzeBlock<a class="headerlink" href="#hglobalvaluenumberer-analyzeblock" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="hglobalvaluenumberer-loopinvariantcodemotion">
+<h2>HGlobalValueNumberer::LoopInvariantCodeMotion()<a class="headerlink" href="#hglobalvaluenumberer-loopinvariantcodemotion" title="Permalink to this headline">¶</a></h2>
+<p>graphのブロックを走査しながら, blockがLoopHeaderだったら、</p>
+<blockquote>
+<div><p>LoopのLastBackEdgeを取得</p>
+<p>ProcessLoopBlock()</p>
+<blockquote>
+<div><p>pre_header取得</p>
+<p>headerのHInstructionを走査</p>
+<blockquote>
+<div><p>instrのflagcheck</p>
+<p>instrのOperandを走査し、IsDefinedAfter(pre_header) ???</p>
+<blockquote>
+<div>pre_headerより後ろのブロックで定義されたOperandを参照しているかを、
+block_id()の比較だけで判定している</div></blockquote>
+<p>invariant判定、かつShouldMove(instr, loop_header) ???</p>
+<blockquote>
+<div><p>opt_count()なるものと比較して、Maxを越えてないか判定
+&amp;&amp; instr-&gt;block()がDeoptimizingの対象でなければ</p>
+<p>instrをUnlink()</p>
+<p>instrをpre_header-&gt;end()へInsertBefore</p>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div>
+<div class="section" id="inlining">
+<h2>inlining<a class="headerlink" href="#inlining" title="Permalink to this headline">¶</a></h2>
+<p>HGraphBuilder::VisitCall()</p>
+<div class="highlight-python"><pre>expr-&gt;RecordTypeFeedback()
+TryCallApply(expr)
+types = expr-&gt;GetReceiverTypes()
+if (expr-&gt;IsMonomorphic()) {
+  if (HasCustomCallGenerator() || type != RECEIVER_MAP_CHECK) {
+    call = PreProcessCall(HCallNamed())
+  } else {
+    AddCheckConstantFunction()
+    if (TryInline()) return
+    call = PreProcessCall(HCallConstantFunction())
+  }
+} else if (types != NULL &amp;&amp; types-&gt;length() &gt; 1) {
+  HandlePolymorphicCallNamed()
+} else {
+  call = PreProcessCall( HCallNamed())
+}</pre>
+</div>
+<p>HGraphBuilder::HandlePolymorphicCallNamed()</p>
+<blockquote>
+<div>if展開してそれぞれjumpする</div></blockquote>
+<p>HGraphBuilder::TryInline()</p>
+<blockquote>
+<div><p>大きすぎる関数はしない</p>
+<p>継続やらcontext jumpを行うものはしない</p>
+<p>再帰関数はしない</p>
+<p>ParserApi::Parse(&amp;target_info)
+Scope::Analyze(&amp;target_info)</p>
+<p>EnableDeoptimizationSupport()          &lt;&#8211; 直接関係ない
+Compiler::RecordFunctionCompilation()</p>
+<p>AddInstruction(... HEnterInlined())</p>
+<p>VisitDeclarations()
+VisitStatemens()</p>
+<p>後続の処理で、ガチガチにinline展開する</p>
+</div></blockquote>
+</div>
+<div class="section" id="hrangeanalysis-analyze">
+<h2>HRangeAnalysis::Analyze<a class="headerlink" href="#hrangeanalysis-analyze" title="Permalink to this headline">¶</a></h2>
+<p>todo</p>
+<hr class="docutils" />
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer">
+        &copy; Copyright 2011, nothingcosmos.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,112 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lithium &mdash; V8 Crankshaft Overview 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/print.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/theme_extras.js"></script>
+    <link rel="top" title="V8 Crankshaft Overview 1.0 documentation" href="../index.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="../index.html">
+          <span>V8 Crankshaft Overview 1.0 documentation</span></a></h1>
+        <h2 class="heading"><span>lithium</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="lithium">
+<h1>lithium<a class="headerlink" href="#lithium" title="Permalink to this headline">¶</a></h1>
+<hr class="docutils" />
+<div class="section" id="loperand">
+<h2>LOperand<a class="headerlink" href="#loperand" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div>kind
+unsigned <a href="#id1"><span class="problematic" id="id2">value_</span></a>;</div></blockquote>
+</div>
+<div class="section" id="lmoveoperand">
+<h2>LMoveOperand<a class="headerlink" href="#lmoveoperand" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div>LOperand* <a href="#id3"><span class="problematic" id="id4">source_</span></a>;
+LOperand* <a href="#id5"><span class="problematic" id="id6">destination_</span></a>;</div></blockquote>
+<hr class="docutils" />
+<div class="section" id="lithium-ia32">
+<h3>lithium-ia32<a class="headerlink" href="#lithium-ia32" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="linstruction">
+<h2>LInstruction<a class="headerlink" href="#linstruction" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div>Opcode opcode()
+HValue* <a href="#id7"><span class="problematic" id="id8">hydrogen_value_</span></a>;</div></blockquote>
+</div>
+<div class="section" id="ltemplateinstruction">
+<h2>LTemplateInstruction<a class="headerlink" href="#ltemplateinstruction" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div>EmbeddedContainer&lt;LOperand*, R&gt; <a href="#id9"><span class="problematic" id="id10">results_</span></a>;
+EmbeddedContainer&lt;LOperand*, I&gt; <a href="#id11"><span class="problematic" id="id12">inputs_</span></a>;
+EmbeddedContainer&lt;LOperand*, T&gt; <a href="#id13"><span class="problematic" id="id14">temps_</span></a>;</div></blockquote>
+</div>
+<div class="section" id="lchunk">
+<h2>LChunk<a class="headerlink" href="#lchunk" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div>int <a href="#id15"><span class="problematic" id="id16">spill_slot_count_</span></a>;
+CompilationInfo* <a href="#id17"><span class="problematic" id="id18">info_</span></a>;
+HGraph* const <a href="#id19"><span class="problematic" id="id20">graph_</span></a>;
+ZoneList&lt;LInstruction*&gt; <a href="#id21"><span class="problematic" id="id22">instructions_</span></a>;
+ZoneList&lt;LPointerMap*&gt; <a href="#id23"><span class="problematic" id="id24">pointer_maps_</span></a>;
+int <a href="#id25"><span class="problematic" id="id26">num_double_slots_</span></a>;
+ZoneList&lt;Handle&lt;JSFunction&gt; &gt; <a href="#id27"><span class="problematic" id="id28">inlined_closures_</span></a>;</div></blockquote>
+</div>
+<div class="section" id="lchunkbuilder">
+<h2>LChunkBuilder<a class="headerlink" href="#lchunkbuilder" title="Permalink to this headline">¶</a></h2>
+<hr class="docutils" />
+<hr class="docutils" />
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer">
+        &copy; Copyright 2011, nothingcosmos.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.
+    </div>
+  </body>
+</html>

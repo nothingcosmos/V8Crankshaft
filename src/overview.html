@@ -1,0 +1,161 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>V8 JIT Compiler Overview &mdash; V8 Crankshaft Overview 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/print.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/theme_extras.js"></script>
+    <link rel="top" title="V8 Crankshaft Overview 1.0 documentation" href="../index.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="../index.html">
+          <span>V8 Crankshaft Overview 1.0 documentation</span></a></h1>
+        <h2 class="heading"><span>V8 JIT Compiler Overview</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="v8-jit-compiler-overview">
+<h1>V8 JIT Compiler Overview<a class="headerlink" href="#v8-jit-compiler-overview" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>V8のJITコンパイラは2種類</p>
+<p>full-codegen</p>
+<p>crankshaft</p>
+<p>Crankshaftは、V8に搭載されたJITコンパイラの名前</p>
+<p>JavaScriptのASTをhigh-levelなSSA形式のIR(Hydrogen)へ変換する。
+Hydrogenは、graphベースらしい</p>
+<p>Hydrogenを機種依存のlow-levelなIR(Lithium)へ変換する。</p>
+<p>機種依存コードは、arm mips ia32/x64が用意されている</p>
+</div>
+<div class="section" id="id1">
+<h2>構成<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id2">
+<h3>規模<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>src/XX.cc 146k step</p>
+<p>src/XX.h   71k step</p>
+<p>src/ia32/XX 43k step</p>
+<p>src/x64/XX  44k step</p>
+<p>hydrogen               8.5kstep
+hydrogen-instructions  6.5kstep
+lithium                  1kstep
+lithium-allocator      3.0kstep</p>
+<p>ia32/lithium*         10  kstep
+ia32/codegen           0.7kstep</p>
+</div>
+</div>
+<div class="section" id="keyword">
+<h2>keyword<a class="headerlink" href="#keyword" title="Permalink to this headline">¶</a></h2>
+<p>crankshaft UseCrankshaft</p>
+<p>MakeCrankshaftCode</p>
+<p>MarkForLazyRecompilation</p>
+</div>
+<div class="section" id="option-flags">
+<h2>Option Flags<a class="headerlink" href="#option-flags" title="Permalink to this headline">¶</a></h2>
+<p>// Flags for Crankshaft.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">crankshaft</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="s">&quot;use crankshaft&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_string</span><span class="p">(</span><span class="n">hydrogen_filter</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;hydrogen use/trace filter&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">use_hydrogen</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="s">&quot;use generated hydrogen for compilation&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">build_lithium</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="s">&quot;use lithium chunk builder&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">alloc_lithium</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="s">&quot;use lithium register allocator&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">use_lithium</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="s">&quot;use lithium code generator&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">use_range</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="s">&quot;use hydrogen range analysis&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">eliminate_dead_phis</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="s">&quot;eliminate dead phis&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">use_gvn</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="s">&quot;use hydrogen global value numbering&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">use_canonicalizing</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="s">&quot;use hydrogen instruction canonicalizing&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">use_inlining</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="s">&quot;use function inlining&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">limit_inlining</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="s">&quot;limit code size growth from inlining&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">eliminate_empty_blocks</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="s">&quot;eliminate empty blocks&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">loop_invariant_code_motion</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="s">&quot;loop invariant code motion&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">collect_megamorphic_maps_from_stub_cache</span><span class="p">,</span>
+            <span class="n">true</span><span class="p">,</span>
+                        <span class="s">&quot;crankshaft harvests type feedback from stub cache&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">hydrogen_stats</span><span class="p">,</span> <span class="n">false</span><span class="p">,</span> <span class="s">&quot;print statistics for hydrogen&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">trace_hydrogen</span><span class="p">,</span> <span class="n">false</span><span class="p">,</span> <span class="s">&quot;trace generated hydrogen to file&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">trace_inlining</span><span class="p">,</span> <span class="n">false</span><span class="p">,</span> <span class="s">&quot;trace inlining decisions&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">trace_alloc</span><span class="p">,</span> <span class="n">false</span><span class="p">,</span> <span class="s">&quot;trace register allocator&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">trace_all_uses</span><span class="p">,</span> <span class="n">false</span><span class="p">,</span> <span class="s">&quot;trace all use positions&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">trace_range</span><span class="p">,</span> <span class="n">false</span><span class="p">,</span> <span class="s">&quot;trace range analysis&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">trace_gvn</span><span class="p">,</span> <span class="n">false</span><span class="p">,</span> <span class="s">&quot;trace global value numbering&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">trace_representation</span><span class="p">,</span> <span class="n">false</span><span class="p">,</span> <span class="s">&quot;trace representation types&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">stress_pointer_maps</span><span class="p">,</span> <span class="n">false</span><span class="p">,</span> <span class="s">&quot;pointer map for every instruction&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">stress_environments</span><span class="p">,</span> <span class="n">false</span><span class="p">,</span> <span class="s">&quot;environment for every instruction&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_int</span><span class="p">(</span><span class="n">deopt_every_n_times</span><span class="p">,</span>
+           <span class="mi">0</span><span class="p">,</span>
+                      <span class="s">&quot;deoptimize every n times a deopt point is passed&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">trap_on_deopt</span><span class="p">,</span> <span class="n">false</span><span class="p">,</span> <span class="s">&quot;put a break point before deoptimizing&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">deoptimize_uncommon_cases</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="s">&quot;deoptimize uncommon cases&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">polymorphic_inlining</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="s">&quot;polymorphic inlining&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">use_osr</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="s">&quot;use on-stack replacement&quot;</span><span class="p">)</span>
+
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">trace_osr</span><span class="p">,</span> <span class="n">false</span><span class="p">,</span> <span class="s">&quot;trace on-stack replacement&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_int</span><span class="p">(</span><span class="n">stress_runs</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&quot;number of stress runs&quot;</span><span class="p">)</span>
+<span class="n">DEFINE_bool</span><span class="p">(</span><span class="n">optimize_closures</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="s">&quot;optimize closures&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="compiler-cc-makecrankshaftcode">
+<h2>compiler.cc:MakeCrankshaftCode()<a class="headerlink" href="#compiler-cc-makecrankshaftcode" title="Permalink to this headline">¶</a></h2>
+<p>CompilationInfo
+EnableDeoptimizationSupport
+HPhase phase()
+CompilationInfo unoptimized
+FullCodeGenerator::MakeCode()
+// using hydrogen
+HTracer:::Instance()-&gt;TraceCompilation(info-&gt;function())</p>
+<p>TypeFeedbackOracle
+HGraphBuilder builder()
+HPHase phase()
+HGraph* graph = builder.CreateGraph:()
+Optimized_code = graph-&gt;Compile()
+info-&gt;SetCode(optimized_code)
+FinishOptimization(info-&gt;closure(), start)</p>
+<hr class="docutils" />
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer">
+        &copy; Copyright 2011, nothingcosmos.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.
+    </div>
+  </body>
+</html>

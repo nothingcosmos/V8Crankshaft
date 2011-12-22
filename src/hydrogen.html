@@ -1,0 +1,138 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Hydrogen &mdash; V8 Crankshaft Overview 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/print.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/theme_extras.js"></script>
+    <link rel="top" title="V8 Crankshaft Overview 1.0 documentation" href="../index.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="../index.html">
+          <span>V8 Crankshaft Overview 1.0 documentation</span></a></h1>
+        <h2 class="heading"><span>Hydrogen</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="hydrogen">
+<h1>Hydrogen<a class="headerlink" href="#hydrogen" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>構成<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>hydrogen
+hydrogen-instructions
+ia32/lithium-ia32</p>
+</div>
+<div class="section" id="hydrogen-instructions">
+<h2>hydrogen-instructions<a class="headerlink" href="#hydrogen-instructions" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="range">
+<h3>Range<a class="headerlink" href="#range" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="hbasicblock">
+<h3>HBasicBlock<a class="headerlink" href="#hbasicblock" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="representation">
+<h3>Representation<a class="headerlink" href="#representation" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="htype">
+<h3>HType<a class="headerlink" href="#htype" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="huselistnode">
+<h3>HUseListNode<a class="headerlink" href="#huselistnode" title="Permalink to this headline">¶</a></h3>
+<p>たぶん、HValueの使用点</p>
+</div>
+<div class="section" id="huseiterator">
+<h3>HUseIterator<a class="headerlink" href="#huseiterator" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="hvalue">
+<h3>HValue<a class="headerlink" href="#hvalue" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="hinstruction">
+<h3>HInstruction<a class="headerlink" href="#hinstruction" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<hr class="docutils" />
+<div class="section" id="id2">
+<h2>hydrogen<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="hbasicblock-public-zoneobject">
+<h3>HBasicBlock: public ZoneObject<a class="headerlink" href="#hbasicblock-public-zoneobject" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="hloopinfomation">
+<h3>HLoopInfomation<a class="headerlink" href="#hloopinfomation" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><p>loop_header()</p>
+<p>GetLastBackEdge()</p>
+</div></blockquote>
+</div>
+<div class="section" id="hgraph">
+<h3>HGraph<a class="headerlink" href="#hgraph" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="henvironment">
+<h3>HEnvironment<a class="headerlink" href="#henvironment" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="hphase">
+<h3>HPhase<a class="headerlink" href="#hphase" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div>HGraph* <a href="#id3"><span class="problematic" id="id4">graph_</span></a>;
+LChunk* <a href="#id5"><span class="problematic" id="id6">chunk_</span></a>;
+LAllocator* allocator;</div></blockquote>
+</div>
+</div>
+<div class="section" id="ia32-lithium-ia32">
+<h2>ia32/lithium-ia32<a class="headerlink" href="#ia32-lithium-ia32" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="lcodegen">
+<h3>LCodeGen<a class="headerlink" href="#lcodegen" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="linstruction">
+<h3>LInstruction<a class="headerlink" href="#linstruction" title="Permalink to this headline">¶</a></h3>
+<hr class="docutils" />
+<hr class="docutils" />
+</div>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer">
+        &copy; Copyright 2011, nothingcosmos.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.
+    </div>
+  </body>
+</html>
