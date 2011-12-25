@@ -15,7 +15,7 @@ Crankshaftというのは、JavaScriptエンジンであるV8に
 ここ1年で新規追加された、JITコンパイラになります。
 
 V8はこの新しいJITコンパイラの追加により、
-V8ベンチマークスーツで*50%性能向上*したようです。
+V8ベンチマークで50%性能向上したようです。
 
 .. image :: png/V8Bench.jpg
 
@@ -250,11 +250,11 @@ FactIF ::
 
   --trace_hydrogen  カレントのhydornge.cfgにASTやら中間表現を出力する
   
-  --trace_codegen コンパイルログをstdoutに出力する
+  --trace_codegen   コンパイルログをstdoutに出力する
   
-  --print_ast コンパイル対象のjsのASTをstdoutに出力する
+  --print_ast       コンパイル対象のjsのASTをstdoutに出力する
   
-  --print_code コンパイル後のAsmをstdoutに出力する
+  --print_code      コンパイル後のAsmをstdoutに出力する
 
 7. 実行例
 -----------------------------------------------------------
@@ -293,18 +293,31 @@ FactIF ::
   --- 385:2.8171041143805494e+128---
   --- 386:2.4227095383672724e+130---
 
-上記ログによると、最初に必要なjsをfull-codegenでコンパイルし、hot codeをCrankshaftでrecompileしている。
+上記ログによると、最初に起動に必要なjsをfull-codegenでコンパイルし、
 
-実行途中でCrankshaftでRecompileされているメソッドは、Bench()とFactIf()です。
+hot codeをCrankshaftでrecompileしているようです。
 
-Bench()をCrankshaftでrecompileしていますが、何度も実行されるループが、hot codeだと判定されたのだと思います。
+CrankshaftでRecompileされているメソッドは、Bench()とFactIf()です。
 
-ログの出力具合からBench()を実行中なはずです。
+Bench()
 
-FactIfからのreturnからBench()のCrankshaftしたコードへ遷移しているか、
-ループの実行途中にsafepointを埋め込み、full-codegenのsafepointからCrankshaftが生成したコードへ遷移しているはず
+  ループ長が長いため、hot codeだと判定され、CrankshaftでRecompileされているのだと思います。
 
-FactIF()のrecompileが走った理由も、おそらく何度も呼び出されるメソッドであるためだと思います。
+  Bench()をRecompileした際には、ログの出力からBench()を実行中なはずです。
+
+  FactIf()のreturnからBench()のCrankshaftが生成したコードへ遷移しているか、
+
+  Crankshaftが生成したコードのループの中にsafepointを埋め込み、
+
+  full-codegenのsafepointからCrankshaftが生成したコードへ遷移しているはずです。
+
+FactIF()
+
+  何度も呼び出されるメソッドであるため、hot codeだと判定され、CrankshaftでRecompileされているのだと思います。
+
+  何度も呼び出されるメソッドの場合、メソッドが次に呼ばれた際に、
+
+  full-codegenが生成したコードではなく、Crankshaftが生成したコードを呼び出せば良いはずです。
 
 7. gdb debug
 -----------------------------------------------------------
@@ -348,13 +361,19 @@ Crankshaftの入り口は、MakeCrankshaftCode() ::
 Crankshaftには、high-level(HIR)な中間表現であるhydrogenと、
 low-level(LIR)な中間表現であるlithiumがあります。
 
-hydrogenがSSA形式の中間表現で、ここで機種非依存の最適化を行います。
+hydrogenはSSA形式の中間表現で、builder.CreateGraph()で機種非依存の最適化を行います。
 
-lithiumが機種依存の中間表現で、mips arm x86/x64向けが用意されており、それぞれのディレクトリ下で定義されています。
+lithiumは3つ組形式の、機種依存の中間表現で、
 
-lithiumは3つ組形式で、それぞれのディレクトリ下で機種依存の処理を行ったり、
+mips arm x86/x64向けが用意されており、それぞれのディレクトリ下で定義されています。
 
-継承したクラスのvirtual method経由でレジスタ割り付け等の機種共通の処理が行われるはずです。
+graph->Compile()ではhydrogenから機種依存のlithiumへ変換された後、
+
+機種依存の最適化、レジスタ割り付け、コード生成を行います。
+
+レジスタ割り付けなどの機種共通の処理では、
+
+lithiumのベースクラスから継承したvirtual method経由でレジスタ割り付け等を行うはずです。
 
 上記の構造は、JVM HotSpot Clientコンパイラと非常によく似ています。
 
@@ -364,7 +383,7 @@ lithiumは3つ組形式で、それぞれのディレクトリ下で機種依存
 builder.CreateGraph()
 ================================================================================
 
-CreateGraph()は、graphベースのhydrogenの作成から、最適化まで行います。
+CreateGraph()は、JavaScriptのASTからgraphベースのhydrogenへの変換、最適化まで行います。
 
 Hydrogenの大まかな流れ ::
 
@@ -417,9 +436,9 @@ Hydrogenの大まかな流れ ::
 HGraph::Compile()
 ================================================================================
 
-Compile()は、low-level向けの最適化およびコード生成まで行う
+Compile()は、hydrogenからlithiumへの変換、機種依存の最適化およびコード生成まで行う
 
-Lithiumの大まかな流れ ::
+lithiumの大まかな流れ ::
 
   LAllocator allocator();
   LChunkBuilder builder(info, this, &allocator);
@@ -437,7 +456,7 @@ Lithiumの大まかな流れ ::
   CodeGenerator::PrintCode(code, info);
 
 AST Image
-###############################################################################
+================================================================================
 
 FactIf AST ::
 
@@ -475,7 +494,7 @@ FactIf AST ::
   . . VAR PROXY local[0] (mode = VAR) "p"
 
 hydrogen image
-###############################################################################
+================================================================================
 
 FactIf hydrogen ::
 
@@ -487,37 +506,34 @@ FactIf hydrogen ::
 
 .. graphviz::
 
-  digraph factFor {
+  digraph factIf {
 
-  B0 [shape=box, label=" 0 0 v0 BlockEntry  <|@ \l 0 1 t1 Constant 0x32e08091 <undefined> <|@ \l 0 1 t2 Parameter 0 <|@ \l 0 4 t3 Parameter 1 <|@ \l 0 5 t4 Context  <|@ \l 0 0 v5 Simulate id=2 var[0] = t2, var[1] = t3, var[2] = t4, var[3] = t1 <|@ \l 0 0 v6 Goto B1 <|@ \l "];
+  B0 [shape=box, label="B0:\l 0 0 v0 BlockEntry  <|@ \l 0 1 t1 Constant 0x32e08091 <undefined> <|@ \l 0 1 t2 Parameter 0 <|@ \l 0 4 t3 Parameter 1 <|@ \l 0 5 t4 Context  <|@ \l 0 0 v5 Simulate id=2 var[0] = t2, var[1] = t3, var[2] = t4, var[3] = t1 <|@ \l 0 0 v6 Goto B1 <|@ \l "];
   B0 -> B1;
 
-  B1 [shape=box, label=" 0 0 v7 BlockEntry  <|@ \l 0 0 v8 Simulate id=3 <|@ \l 0 0 v9 StackCheck  <|@ \l 0 2 i42 Change t3 t to i range[-2147483648,2147483647,m0=0] <|@ \l 0 2 i43 Constant 1 range[1,1,m0=0] <|@ \l 0 0 v11 CompareIDAndBranch GT i42 i43 goto (B4, B2) <|@ \l "];
+  B1 [shape=box, label="B1:\l 0 0 v7 BlockEntry  <|@ \l 0 0 v8 Simulate id=3 <|@ \l 0 0 v9 StackCheck  <|@ \l 0 2 i42 Change t3 t to i range[-2147483648,2147483647,m0=0] <|@ \l 0 2 i43 Constant 1 range[1,1,m0=0] <|@ \l 0 0 v11 CompareIDAndBranch GT i42 i43 goto (B4, B2) <|@ \l "];
   B1 -> B4;
   B1 -> B2;
 
-  B2 [shape=box, label=" 0 0 v15 BlockEntry  <|@ \l 0 0 v16 Simulate id=47 <|@ \l 0 0 v17 Goto B3 <|@ \l "];
+  B2 [shape=box, label="B2:\l 0 0 v15 BlockEntry  <|@ \l 0 0 v16 Simulate id=47 <|@ \l 0 0 v17 Goto B3 <|@ \l "];
   B2 -> B3;
 
-  B3 [shape=box, label=" 0 0 v30 BlockEntry  <|@ \l 0 2 t31 Constant 1 range[1,1,m0=0] type[smi] <|@ \l 0 0 v34 Simulate id=45 var[3] = t31 <|@ \l 0 0 v35 Goto B6 <|@ \l "];
+  B3 [shape=box, label="B3:\l 0 0 v30 BlockEntry  <|@ \l 0 2 t31 Constant 1 range[1,1,m0=0] type[smi] <|@ \l 0 0 v34 Simulate id=45 var[3] = t31 <|@ \l 0 0 v35 Goto B6 <|@ \l "];
   B3 -> B6;
 
-  B4 [shape=box, label=" 0 0 v12 BlockEntry  <|@ \l 0 0 v13 Simulate id=46 <|@ \l 0 0 v14 Goto B5 <|@ \l "];
+  B4 [shape=box, label="B4:\l 0 0 v12 BlockEntry  <|@ \l 0 0 v13 Simulate id=46 <|@ \l 0 0 v14 Goto B5 <|@ \l "];
   B4 -> B5;
 
-  B5 [shape=box, label=" 0 0 v18 BlockEntry  <|@ \l 0 1 t19 GlobalObject t4 <|@ \l 0 1 i21 Sub i42 i43 range[1,2147483646,m0=0] <|@ \l 0 1 t22 LoadGlobalCell [0x471090d1] <|@ \l 0 0 t23 CheckFunction t22 0x32e41645 <|@ \l 0 1 t24 GlobalReceiver t19 <|@ \l 0 0 t25 PushArgument t24 <|@ \l 0 1 t45 Change i21 i to t range[1,2147483646,m0=0] type[number] <|@ \l 0 0 t26 PushArgument t45 <|@ \l 0 2 t27 CallKnownGlobal o #2 changes[*] <|@ \l 0 0 v28 Simulate id=28 push t3, push t27 <|@ \l 0 1 d40 Change t3 t to d <|@ \l 0 1 d46 Change t27 t to d <|@ \l 0 2 d29 Mul d40 d46 ! <|@ \l 0 0 v32 Simulate id=45 pop 2 / var[3] = d29 <|@ \l 0 1 t47 Change d29 d to t type[heap-number] <|@ \l 0 0 v33 Goto B6 <|@ \l "];
+  B5 [shape=box, label="B5:\l 0 0 v18 BlockEntry  <|@ \l 0 1 t19 GlobalObject t4 <|@ \l 0 1 i21 Sub i42 i43 range[1,2147483646,m0=0] <|@ \l 0 1 t22 LoadGlobalCell [0x471090d1] <|@ \l 0 0 t23 CheckFunction t22 0x32e41645 <|@ \l 0 1 t24 GlobalReceiver t19 <|@ \l 0 0 t25 PushArgument t24 <|@ \l 0 1 t45 Change i21 i to t range[1,2147483646,m0=0] type[number] <|@ \l 0 0 t26 PushArgument t45 <|@ \l 0 2 t27 CallKnownGlobal o #2 changes[*] <|@ \l 0 0 v28 Simulate id=28 push t3, push t27 <|@ \l 0 1 d40 Change t3 t to d <|@ \l 0 1 d46 Change t27 t to d <|@ \l 0 2 d29 Mul d40 d46 ! <|@ \l 0 0 v32 Simulate id=45 pop 2 / var[3] = d29 <|@ \l 0 1 t47 Change d29 d to t type[heap-number] <|@ \l 0 0 v33 Goto B6 <|@ \l "];
   B5 -> B6;
 
-  B6 [shape=box, label=" begin_HIR 0 0 v37 BlockEntry  <|@ \l 0 0 v38 Return t36 <|@ \l "];
-  B6 -> B5;
-  B6 -> B3;
-
+  B6 [shape=box, label="B6:\l 0 0 v37 BlockEntry  <|@ \l 0 0 v38 Return t36 <|@ \l "];
   }
 
-Lithium image
-###############################################################################
+lithium image
+================================================================================
 
-FactIf Lithium::
+FactIf lithium::
 
   begin_compilation
     name "FactIf"
@@ -527,30 +543,28 @@ FactIf Lithium::
 
 .. graphviz::
 
-  digraph factFor {
+  digraph factIf {
 
-  B0 [shape=box, label=" begin_LIR \l 0 label () () () ()  <|@ \l 2 gap () () () ()  <|@ \l 4 parameter [stack:-2]=  <|@ \l 6 gap () ([stack:-2];) () ()  <|@ \l 8 parameter [stack:-1]=  <|@ \l 10 gap () ([stack:-1];) () ()  <|@ \l 12 context [eax|R]=  <|@ \l 14 gap ([stack:0] = [eax|R];) () () ()  <|@ \l 16 gap () () () ()  <|@ \l 18 goto B1 <|@ \l end_LIR \l "];
+  B0 [shape=box, label="B0:\l 0 label () () () ()  <|@ \l 2 gap () () () ()  <|@ \l 4 parameter [stack:-2]=  <|@ \l 6 gap () ([stack:-2];) () ()  <|@ \l 8 parameter [stack:-1]=  <|@ \l 10 gap () ([stack:-1];) () ()  <|@ \l 12 context [eax|R]=  <|@ \l 14 gap ([stack:0] = [eax|R];) () () ()  <|@ \l 16 gap () () () ()  <|@ \l 18 goto B1 <|@ \l "];
   B0 -> B1;
 
-  B1 [shape=box, label=" begin_LIR \l 20 label () () () ()  <|@ \l 22 gap () ([esi|R] = [eax|R];) () ()  <|@ \l 24 stack-check = [esi|R] [id=3|[parameters=2|[arguments_stack_height=0|[stack:-2];[stack:-1];[constant:1]] {[esi|R];[stack:0];[eax|R]} @-1 <|@ \l 26 gap () ([eax|R] = [stack:-1];) () ()  <|@ \l 28 tagged-to-i [eax|R]= [eax|R] [id=3|[parameters=2|[arguments_stack_height=0|[stack:-2];[stack:-1];[constant:1]] <|@ \l 30 gap (v0(0) = [eax|R];) () () ()  <|@ \l 32 gap () () () ()  <|@ \l 34 cmp-id-and-branch if [eax|R] > [constant:43] then B4 else B2 <|@  \l end_LIR \l "];
+  B1 [shape=box, label="B1:\l 20 label () () () ()  <|@ \l 22 gap () ([esi|R] = [eax|R];) () ()  <|@ \l 24 stack-check = [esi|R] [id=3|[parameters=2|[arguments_stack_height=0|[stack:-2];[stack:-1];[constant:1]] {[esi|R];[stack:0];[eax|R]} @-1 <|@ \l 26 gap () ([eax|R] = [stack:-1];) () ()  <|@ \l 28 tagged-to-i [eax|R]= [eax|R] [id=3|[parameters=2|[arguments_stack_height=0|[stack:-2];[stack:-1];[constant:1]] <|@ \l 30 gap (v0(0) = [eax|R];) () () ()  <|@ \l 32 gap () () () ()  <|@ \l 34 cmp-id-and-branch if [eax|R] > [constant:43] then B4 else B2 <|@  \l "];
   B1 -> B4;
   B1 -> B2;
 
-  B2 [shape=box, label=" begin_LIR \l 36 label () () () ()  Dead block replaced with B3 <|@ \l 38 gap () () () ()  <|@ \l 40 gap () () () ()  <|@ \l 42 goto B3 <|@ \l end_LIR \l "];
+  B2 [shape=box, label="B2:\l 36 label () () () ()  Dead block replaced with B3 <|@ \l 38 gap () () () ()  <|@ \l 40 gap () () () ()  <|@ \l 42 goto B3 <|@ \l "];
   B2 -> B3;
 
-  B3 [shape=box, label=" begin_LIR \l 44 label () () () ()  <|@ \l 46 gap () () () ()  <|@ \l 48 gap () ([ecx|R] = [constant:31];) () ()  <|@ \l 50 goto B6 <|@ \l end_LIR \l "];
+  B3 [shape=box, label="B3:\l 44 label () () () ()  <|@ \l 46 gap () () () ()  <|@ \l 48 gap () ([ecx|R] = [constant:31];) () ()  <|@ \l 50 goto B6 <|@ \l "];
   B3 -> B6;
 
-  B4 [shape=box, label=" begin_LIR \l 52 label () () () ()  Dead block replaced with B5 <|@ \l 54 gap () () () ()  <|@ \l 56 gap () () () ()  <|@ \l 58 goto B5 <|@ \l end_LIR \l "];
+  B4 [shape=box, label="B4:\l 52 label () () () ()  Dead block replaced with B5 <|@ \l 54 gap () () () ()  <|@ \l 56 gap () () () ()  <|@ \l 58 goto B5 <|@ \l "];
   B4 -> B5;
 
-  B5 [shape=box, label=" begin_LIR \l 60 label () () () ()  <|@ \l 62 gap () () ([ecx|R] = [stack:0];) ()  <|@ \l 64 global-object [ecx|R]= [ecx|R] <|@ \l 66 gap (v0(0) = [ecx|R];) ([eax|R];) () ()  <|@ \l 68 sub-i [eax|R]= [eax|R] [constant:43] <|@ \l 70 gap (v0(0) = [eax|R];) () () ()  <|@ \l 72 load-global-cell [edx|R]=  <|@ \l 74 gap (v0(0) = [edx|R];) () () ()  <|@ \l 76 check-function = [edx|R] [id=46|[parameters=2|[arguments_stack_height=0|[stack:-2];[stack:-1];[constant:1]] <|@ \l 78 gap () () () ()  <|@ \l 80 global-receiver [ecx|R]= [ecx|R] <|@ \l 82 gap (v0(0) = [ecx|R];) () () ()  <|@ \l 84 push-argument = [ecx|R] <|@ \l 86 gap () ([eax|R];) () ()  <|@ \l 88 number-tag-i [eax|R]= [eax|R] [id=46|[parameters=2|[arguments_stack_height=1|[stack:-2];[stack:-1];[constant:1]] {[eax|R]} @66 <|@ \l 90 gap (v0(0) = [eax|R];) () () ()  <|@ \l 92 push-argument = [eax|R] <|@ \l 94 gap () () () ()  <|@ \l 96 call-known-global [eax|R]#1 /  {} @57 <|@ \l 98 gap (v0(0) = [eax|R];) ([eax|R];) () ()  <|@ \l 100 lazy-bailout =  [id=28|[parameters=2|[arguments_stack_height=0|[stack:-2];[stack:-1];[constant:1];[stack:-1];[eax|R]] <|@ \l 102 gap () () ([ecx|R] = [stack:-1];) ()  <|@ \l 104 double-untag [xmm1|R]= [ecx|R] [id=28|[parameters=2|[arguments_stack_height=0|[stack:-2];[ecx|R];[constant:1];[ecx|R];[eax|R]] <|@ \l 106 gap (v0(0) = [xmm1|R];) () () ()  <|@ \l 108 double-untag [xmm2|R]= [eax|R] [id=28|[parameters=2|[arguments_stack_height=0|[stack:-2];[ecx|R];[constant:1];[ecx|R];[eax|R]] <|@ \l 110 gap (v0(0) = [xmm2|R];) ([xmm1|R];) () ()  <|@ \l 112 mul-d [xmm1|R]= [xmm1|R] [xmm2|R] <|@ \l 114 gap (v0(0) = [xmm1|R];) () () ()  <|@ \l 116 number-tag-d [ecx|R]= [xmm1|R] {} @55 <|@ \l 118 gap (v0(0) = [ecx|R];) () () ()  <|@ \l 120 gap () ([ecx|R];) () ()  <|@ \l 122 goto B6 <|@ \l end_LIR \l "];
+  B5 [shape=box, label="B5:\l 60 label () () () ()  <|@ \l 62 gap () () ([ecx|R] = [stack:0];) ()  <|@ \l 64 global-object [ecx|R]= [ecx|R] <|@ \l 66 gap (v0(0) = [ecx|R];) ([eax|R];) () ()  <|@ \l 68 sub-i [eax|R]= [eax|R] [constant:43] <|@ \l 70 gap (v0(0) = [eax|R];) () () ()  <|@ \l 72 load-global-cell [edx|R]=  <|@ \l 74 gap (v0(0) = [edx|R];) () () ()  <|@ \l 76 check-function = [edx|R] [id=46|[parameters=2|[arguments_stack_height=0|[stack:-2];[stack:-1];[constant:1]] <|@ \l 78 gap () () () ()  <|@ \l 80 global-receiver [ecx|R]= [ecx|R] <|@ \l 82 gap (v0(0) = [ecx|R];) () () ()  <|@ \l 84 push-argument = [ecx|R] <|@ \l 86 gap () ([eax|R];) () ()  <|@ \l 88 number-tag-i [eax|R]= [eax|R] [id=46|[parameters=2|[arguments_stack_height=1|[stack:-2];[stack:-1];[constant:1]] {[eax|R]} @66 <|@ \l 90 gap (v0(0) = [eax|R];) () () ()  <|@ \l 92 push-argument = [eax|R] <|@ \l 94 gap () () () ()  <|@ \l 96 call-known-global [eax|R]#1 /  {} @57 <|@ \l 98 gap (v0(0) = [eax|R];) ([eax|R];) () ()  <|@ \l 100 lazy-bailout =  [id=28|[parameters=2|[arguments_stack_height=0|[stack:-2];[stack:-1];[constant:1];[stack:-1];[eax|R]] <|@ \l 102 gap () () ([ecx|R] = [stack:-1];) ()  <|@ \l 104 double-untag [xmm1|R]= [ecx|R] [id=28|[parameters=2|[arguments_stack_height=0|[stack:-2];[ecx|R];[constant:1];[ecx|R];[eax|R]] <|@ \l 106 gap (v0(0) = [xmm1|R];) () () ()  <|@ \l 108 double-untag [xmm2|R]= [eax|R] [id=28|[parameters=2|[arguments_stack_height=0|[stack:-2];[ecx|R];[constant:1];[ecx|R];[eax|R]] <|@ \l 110 gap (v0(0) = [xmm2|R];) ([xmm1|R];) () ()  <|@ \l 112 mul-d [xmm1|R]= [xmm1|R] [xmm2|R] <|@ \l 114 gap (v0(0) = [xmm1|R];) () () ()  <|@ \l 116 number-tag-d [ecx|R]= [xmm1|R] {} @55 <|@ \l 118 gap (v0(0) = [ecx|R];) () () ()  <|@ \l 120 gap () ([ecx|R];) () ()  <|@ \l 122 goto B6 <|@ \l "];
   B5 -> B6;
 
-  B6 [shape=box, label=" begin_LIR \l 124 label () (v0(0) = [ecx|R];) () ()  <|@ \l 126 gap () ([eax|R] = [ecx|R];) () ()  <|@ \l 128 return = [eax|R] <|@ \l 130 gap () () () ()  <|@ \l end_LIR \l "];
-  B6 -> B5;
-  B6 -> B3;
+  B6 [shape=box, label="B6:\l 124 label () (v0(0) = [ecx|R];) () ()  <|@ \l 126 gap () ([eax|R] = [ecx|R];) () ()  <|@ \l 128 return = [eax|R] <|@ \l 130 gap () () () ()  <|@ \l "];
   }
 
 Crankshaft generate code
@@ -722,32 +736,51 @@ x86 generated code ::
 
 関数を再帰で呼び出すあたりのコードが複雑でよくわからんです。
 
-色々なチェック処理が前後で入っていますね。
+前後で色々なチェック処理が前後で入っていますね。
+
+様々なチェック処理がJavaScript依存であり、除去が難しいのであれば、
+
+Dartでは除去できるように設計されているかもしれません。
+
+CrankshaftとJVM HotSpot C1
+--------------------------------------------------------------------------------
 
 Crankshaftの内部構造に関しては、下記のBlogが非常に詳しいです。
 
 wingolog
 http://wingolog.org/tags/v8
 
-上記ブログによると、CrankshaftがJVM HotSpot C1のパクリというか、インスパイアしているらしいのですが、
-同意します。
+上記ブログによると、CrankshaftがJVM HotSpot C1のパクリというか、インスパイアしているらしいです。
 
-正確には、C1.3くらいですか。
+C1というより、C1.3くらいですが。
 
-xxx monkeyがJavaと同等を目指す云々の話も、
-Crankshaftの作りと比較すると、現実的な目標のようの思いました。
+CrankshaftがJVM HotSpot C1から様々な技術を取り入れ、高速化されているように思いましたが、
 
+xxx monkeyはJavaと同等の速度を目指すらしいのですが、
 
-JVM HotSpotと比較すれば、V8がJITコンパイルの改良によって性能向上できる余地は残っているように思います。
+Crankshaftを見習ってJVM HotSpot C1/C2から取り入れるのであれば、
 
-V8ベンチマークは再帰が多いため、V8に有利だという話もありますが、
+現実的な目標のようの思いました。
+
+私が以前作った、OpenJDKのHotSpot C1に関して説明した資料です。
+http://nothingcosmos.github.com/OpenJDKOverview/
+
+JVM HotSpotと比較すれば、CrankshaftのJITコンパイルの改良によって性能向上できる余地は残っているように思います。
+
+V8とV8ベンチマーク
+--------------------------------------------------------------------------------
+
+V8とセットのV8ベンチマークの提供は、V8の方向性を示しており非常に面白いと思っています。
+
+V8ベンチマークは再帰が多いため、xxx monkeyと比較してV8に有利だという話もありますが、
+
+どのような最適化を実装するか否かの判断は、ターゲットにしているベンチマークに依存するように思います。
+
 ループを多用したベンチマークの性能を上げたければ、
-Crankshaftにヘビーなループ最適化を導入すれば性能向上するかもしれません。
 
-どのような最適化を実装するかの判断は、どのようなベンチマークをターゲットにするかに依存するように思います。
-
-そのため、V8とセットのV8ベンチマークの提供は、V8の方向性を示しており非常に面白いと思います。
+Crankshaftにヘビーなループ最適化を導入すればよいのに、現状はそうなっていない。
 
 V8ベンチマークが、V8の性能向上の指針として非常に重要なのだと思います。
 
+※  他のベンチマーク結果も参考にしていると思いますが、詳しいことはよくわかりません。
 

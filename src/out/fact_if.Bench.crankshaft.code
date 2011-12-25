@@ -1,0 +1,730 @@
+
+--- Raw source ---
+() {
+  for (i=0; i<100000; i++) {
+    ret = FactIf(i%100);
+    print ('--- ' + i + ':'  + ret + '---');
+  }
+}
+
+--- Code ---
+kind = FUNCTION
+name = Bench
+Instructions (size = 440)
+0x290263c0     0  55             push ebp
+0x290263c1     1  89e5           mov ebp,esp
+0x290263c3     3  56             push esi
+0x290263c4     4  57             push edi
+0x290263c5     5  3b258c182109   cmp esp,[0x921188c]
+0x290263cb    11  7305           jnc 18  (0x290263d2)
+0x290263cd    13  e8eea2feff     call 0x290106c0             ;; debug: statement 127
+                                                             ;; code: STUB, StackCheckStub, minor: 0
+0x290263d2    18  33c0           xor eax,eax
+0x290263d4    20  b931db6029     mov ecx,0x2960db31          ;; object: 0x2960db31 <String[1]: i>
+0x290263d9    25  8b5613         mov edx,[esi+0x13]
+0x290263dc    28  e8df82feff     call StoreIC_Initialize  (0x2900e6c0)    ;; debug: position 140
+                                                             ;; code: contextual, STORE_IC, UNINITIALIZED
+0x290263e1    33  e929010000     jmp 335  (0x2902650f)
+0x290263e6    38  ff7613         push [esi+0x13]
+0x290263e9    41  8b4613         mov eax,[esi+0x13]
+0x290263ec    44  b931db6029     mov ecx,0x2960db31          ;; object: 0x2960db31 <String[1]: i>
+0x290263f1    49  e8aa70feff     call LoadIC_Initialize  (0x2900d4a0)    ;; debug: statement 165
+                                                             ;; debug: position 178
+                                                             ;; code: contextual, LOAD_IC, UNINITIALIZED
+0x290263f6    54  50             push eax
+0x290263f7    55  b8c8000000     mov eax,0xc8
+0x290263fc    60  5a             pop edx
+0x290263fd    61  e85effffff     call 0x29026360             ;; debug: position 179
+                                                             ;; code: BINARY_OP_IC, UNINITIALIZED (id = 38)
+0x29026402    66  90             nop
+0x29026403    67  50             push eax
+0x29026404    68  b9e9876129     mov ecx,0x296187e9          ;; object: 0x296187e9 <String[6]: FactIf>
+0x29026409    73  e89202ffff     call 0x290166a0             ;; debug: statement 165
+                                                             ;; debug: position 171
+                                                             ;; code: contextual, CALL_IC, UNINITIALIZED, argc = 1
+0x2902640e    78  8b75fc         mov esi,[ebp+0xfc]
+0x29026411    81  b921886129     mov ecx,0x29618821          ;; object: 0x29618821 <String[3]: ret>
+0x29026416    86  8b5613         mov edx,[esi+0x13]
+0x29026419    89  e8a282feff     call StoreIC_Initialize  (0x2900e6c0)    ;; debug: position 169
+                                                             ;; code: contextual, STORE_IC, UNINITIALIZED
+0x2902641e    94  ff7613         push [esi+0x13]
+0x29026421    97  6831886129     push 0x29618831             ;; object: 0x29618831 <String[4]: --- >
+0x29026426   102  8b4613         mov eax,[esi+0x13]
+0x29026429   105  b931db6029     mov ecx,0x2960db31          ;; object: 0x2960db31 <String[1]: i>
+0x2902642e   110  e86d70feff     call LoadIC_Initialize  (0x2900d4a0)    ;; debug: statement 190
+                                                             ;; debug: position 206
+                                                             ;; code: contextual, LOAD_IC, UNINITIALIZED
+0x29026433   115  5a             pop edx
+0x29026434   116  89c1           mov ecx,eax
+0x29026436   118  0bc2           or eax,edx
+0x29026438   120  a801           test al,0x1
+0x2902643a   122  720b           jc 135  (0x29026447)
+0x2902643c   124  89c8           mov eax,ecx
+0x2902643e   126  e8fdfcfeff     call 0x29016140             ;; debug: position 204
+                                                             ;; code: BINARY_OP_IC, UNINITIALIZED (id = 52)
+0x29026443   131  a809           test al,0x9
+0x29026445   133  eb06           jmp 141  (0x2902644d)
+0x29026447   135  89d0           mov eax,edx
+0x29026449   137  03c1           add eax,ecx
+0x2902644b   139  70ef           jo 124  (0x2902643c)
+0x2902644d   141  50             push eax
+0x2902644e   142  b835496129     mov eax,0x29614935          ;; object: 0x29614935 <String[1]: :>
+0x29026453   147  5a             pop edx
+0x29026454   148  89c1           mov ecx,eax
+0x29026456   150  0bc2           or eax,edx
+0x29026458   152  a801           test al,0x1
+0x2902645a   154  720b           jc 167  (0x29026467)
+0x2902645c   156  89c8           mov eax,ecx
+0x2902645e   158  e83d09ffff     call 0x29016da0             ;; debug: position 208
+                                                             ;; code: BINARY_OP_IC, UNINITIALIZED (id = 56)
+0x29026463   163  a809           test al,0x9
+0x29026465   165  eb06           jmp 173  (0x2902646d)
+0x29026467   167  89d0           mov eax,edx
+0x29026469   169  03c1           add eax,ecx
+0x2902646b   171  70ef           jo 156  (0x2902645c)
+0x2902646d   173  50             push eax
+0x2902646e   174  8b4613         mov eax,[esi+0x13]
+0x29026471   177  b921886129     mov ecx,0x29618821          ;; object: 0x29618821 <String[3]: ret>
+0x29026476   182  e82570feff     call LoadIC_Initialize  (0x2900d4a0)    ;; debug: position 217
+                                                             ;; code: contextual, LOAD_IC, UNINITIALIZED
+0x2902647b   187  5a             pop edx
+0x2902647c   188  89c1           mov ecx,eax
+0x2902647e   190  0bc2           or eax,edx
+0x29026480   192  a801           test al,0x1
+0x29026482   194  720b           jc 207  (0x2902648f)
+0x29026484   196  89c8           mov eax,ecx
+0x29026486   198  e81509ffff     call 0x29016da0             ;; debug: position 215
+                                                             ;; code: BINARY_OP_IC, UNINITIALIZED (id = 60)
+0x2902648b   203  a809           test al,0x9
+0x2902648d   205  eb06           jmp 213  (0x29026495)
+0x2902648f   207  89d0           mov eax,edx
+0x29026491   209  03c1           add eax,ecx
+0x29026493   211  70ef           jo 196  (0x29026484)
+0x29026495   213  50             push eax
+0x29026496   214  b841886129     mov eax,0x29618841          ;; object: 0x29618841 <String[3]: --->
+0x2902649b   219  5a             pop edx
+0x2902649c   220  89c1           mov ecx,eax
+0x2902649e   222  0bc2           or eax,edx
+0x290264a0   224  a801           test al,0x1
+0x290264a2   226  720b           jc 239  (0x290264af)
+0x290264a4   228  89c8           mov eax,ecx
+0x290264a6   230  e8f508ffff     call 0x29016da0             ;; debug: position 221
+                                                             ;; code: BINARY_OP_IC, UNINITIALIZED (id = 64)
+0x290264ab   235  a809           test al,0x9
+0x290264ad   237  eb06           jmp 245  (0x290264b5)
+0x290264af   239  89d0           mov eax,edx
+0x290264b1   241  03c1           add eax,ecx
+0x290264b3   243  70ef           jo 228  (0x290264a4)
+0x290264b5   245  50             push eax
+0x290264b6   246  b919836129     mov ecx,0x29618319          ;; object: 0x29618319 <String[5]: print>
+0x290264bb   251  e8e001ffff     call 0x290166a0             ;; debug: statement 190
+                                                             ;; code: contextual, CALL_IC, UNINITIALIZED, argc = 1
+0x290264c0   256  8b75fc         mov esi,[ebp+0xfc]
+0x290264c3   259  8b4613         mov eax,[esi+0x13]
+0x290264c6   262  b931db6029     mov ecx,0x2960db31          ;; object: 0x2960db31 <String[1]: i>
+0x290264cb   267  e8d06ffeff     call LoadIC_Initialize  (0x2900d4a0)    ;; debug: statement 134
+                                                             ;; debug: position 154
+                                                             ;; code: contextual, LOAD_IC, UNINITIALIZED
+0x290264d0   272  a801           test al,0x1
+0x290264d2   274  7405           jz 281  (0x290264d9)
+0x290264d4   276  e82709ffff     call 0x29016e00             ;; code: STUB, ToNumberStub, minor: 0
+0x290264d9   281  83c002         add eax,0x2
+0x290264dc   284  7004           jo 290  (0x290264e2)
+0x290264de   286  a801           test al,0x1
+0x290264e0   288  7211           jc 307  (0x290264f3)
+0x290264e2   290  83e802         sub eax,0x2
+0x290264e5   293  89c2           mov edx,eax
+0x290264e7   295  b802000000     mov eax,0x2
+0x290264ec   300  e84ffcfeff     call 0x29016140             ;; debug: position 155
+                                                             ;; code: BINARY_OP_IC, UNINITIALIZED (id = 27)
+0x290264f1   305  a811           test al,0x11
+0x290264f3   307  b931db6029     mov ecx,0x2960db31          ;; object: 0x2960db31 <String[1]: i>
+0x290264f8   312  8b5613         mov edx,[esi+0x13]
+0x290264fb   315  e8c081feff     call StoreIC_Initialize  (0x2900e6c0)    ;; code: contextual, STORE_IC, UNINITIALIZED
+0x29026500   320  3b258c182109   cmp esp,[0x921188c]
+0x29026506   326  7307           jnc 335  (0x2902650f)
+0x29026508   328  e8b3a1feff     call 0x290106c0             ;; code: STUB, StackCheckStub, minor: 0
+0x2902650d   333  a801           test al,0x1
+0x2902650f   335  8b4613         mov eax,[esi+0x13]
+0x29026512   338  b931db6029     mov ecx,0x2960db31          ;; object: 0x2960db31 <String[1]: i>
+0x29026517   343  e8846ffeff     call LoadIC_Initialize  (0x2900d4a0)    ;; debug: position 144
+                                                             ;; code: contextual, LOAD_IC, UNINITIALIZED
+0x2902651c   348  50             push eax
+0x2902651d   349  b824a5e3ea     mov eax,0xeae3a524
+0x29026522   354  3564a8e0ea     xor eax, 0xeae0a864
+0x29026527   359  5a             pop edx
+0x29026528   360  89d1           mov ecx,edx
+0x2902652a   362  0bc8           or ecx,eax
+0x2902652c   364  f6c101         test_b cl,0x1
+0x2902652f   367  730d           jnc 382  (0x2902653e)
+0x29026531   369  3bd0           cmp edx,eax
+0x29026533   371  0f8cadfeffff   jl 38  (0x290263e6)
+0x29026539   377  e921000000     jmp 415  (0x2902655f)
+0x2902653e   382  e8fde6feff     call 0x29014c40             ;; debug: position 145
+                                                             ;; code: COMPARE_IC, UNINITIALIZED (id = 20)
+0x29026543   387  a814           test al,0x14
+0x29026545   389  eb10           jmp 407  (0x29026557)
+0x29026547   391  3da1809046     cmp eax, 0x469080a1         ;; object: 0x469080a1 <true>
+0x2902654c   396  0f8494feffff   jz 38  (0x290263e6)
+0x29026552   402  e908000000     jmp 415  (0x2902655f)
+0x29026557   407  85c0           test eax,eax
+0x29026559   409  0f8c87feffff   jl 38  (0x290263e6)
+0x2902655f   415  b891809046     mov eax,0x46908091          ;; object: 0x46908091 <undefined>
+0x29026564   420  89ec           mov esp,ebp                 ;; debug: position 235
+                                                             ;; js return
+0x29026566   422  5d             pop ebp
+0x29026567   423  c20400         ret 0x4
+0x2902656a   426  66             nop
+0x2902656b   427  90             nop
+
+Deoptimization Output Data (deopt points = 36)
+ast id        pc  state
+     2         5  NO_REGISTERS
+     3         5  NO_REGISTERS
+     6        20  TOS_REG
+    10        33  TOS_REG
+     8        33  NO_REGISTERS
+    15        38  NO_REGISTERS
+    28        38  NO_REGISTERS
+    34        55  NO_REGISTERS
+    36        60  TOS_REG
+    38        68  NO_REGISTERS
+    42        78  TOS_REG
+    40        81  TOS_REG
+    45        94  TOS_REG
+    43        94  NO_REGISTERS
+    48       102  NO_REGISTERS
+    50       115  TOS_REG
+    52       142  NO_REGISTERS
+    54       147  TOS_REG
+    56       174  NO_REGISTERS
+    58       187  TOS_REG
+    60       214  NO_REGISTERS
+    62       219  TOS_REG
+    64       246  NO_REGISTERS
+    68       256  TOS_REG
+    66       259  NO_REGISTERS
+    29       259  NO_REGISTERS
+    14       259  NO_REGISTERS
+    22       272  TOS_REG
+    26       320  TOS_REG
+    24       320  NO_REGISTERS
+    11       335  NO_REGISTERS
+    13       335  NO_REGISTERS
+    16       349  NO_REGISTERS
+    18       359  TOS_REG
+    20       391  TOS_REG
+    12       415  NO_REGISTERS
+
+Stack checks (size = 1)
+ast_id  pc_offset
+    13        333
+
+RelocInfo (size = 123)
+0x290263cd  statement position  (127)
+0x290263ce  code target (STUB)  (0x290106c0)
+0x290263d5  embedded object  (0x2960db31 <String[1]: i>)
+0x290263dc  position  (140)
+0x290263dd  code target (context) (STORE_IC)  (0x2900e6c0)
+0x290263ed  embedded object  (0x2960db31 <String[1]: i>)
+0x290263f1  statement position  (165)
+0x290263f1  position  (178)
+0x290263f2  code target (context) (LOAD_IC)  (0x2900d4a0)
+0x290263fd  position  (179)
+0x290263fe  code target with id (BINARY_OP_IC)  (0x29026360) (id=38)
+0x29026405  embedded object  (0x296187e9 <String[6]: FactIf>)
+0x29026409  statement position  (165)
+0x29026409  position  (171)
+0x2902640a  code target (context) (CALL_IC)  (0x290166a0)
+0x29026412  embedded object  (0x29618821 <String[3]: ret>)
+0x29026419  position  (169)
+0x2902641a  code target (context) (STORE_IC)  (0x2900e6c0)
+0x29026422  embedded object  (0x29618831 <String[4]: --- >)
+0x2902642a  embedded object  (0x2960db31 <String[1]: i>)
+0x2902642e  statement position  (190)
+0x2902642e  position  (206)
+0x2902642f  code target (context) (LOAD_IC)  (0x2900d4a0)
+0x2902643e  position  (204)
+0x2902643f  code target with id (BINARY_OP_IC)  (0x29016140) (id=52)
+0x2902644f  embedded object  (0x29614935 <String[1]: :>)
+0x2902645e  position  (208)
+0x2902645f  code target with id (BINARY_OP_IC)  (0x29016da0) (id=56)
+0x29026472  embedded object  (0x29618821 <String[3]: ret>)
+0x29026476  position  (217)
+0x29026477  code target (context) (LOAD_IC)  (0x2900d4a0)
+0x29026486  position  (215)
+0x29026487  code target with id (BINARY_OP_IC)  (0x29016da0) (id=60)
+0x29026497  embedded object  (0x29618841 <String[3]: --->)
+0x290264a6  position  (221)
+0x290264a7  code target with id (BINARY_OP_IC)  (0x29016da0) (id=64)
+0x290264b7  embedded object  (0x29618319 <String[5]: print>)
+0x290264bb  statement position  (190)
+0x290264bc  code target (context) (CALL_IC)  (0x290166a0)
+0x290264c7  embedded object  (0x2960db31 <String[1]: i>)
+0x290264cb  statement position  (134)
+0x290264cb  position  (154)
+0x290264cc  code target (context) (LOAD_IC)  (0x2900d4a0)
+0x290264d5  code target (STUB)  (0x29016e00)
+0x290264ec  position  (155)
+0x290264ed  code target with id (BINARY_OP_IC)  (0x29016140) (id=27)
+0x290264f4  embedded object  (0x2960db31 <String[1]: i>)
+0x290264fc  code target (context) (STORE_IC)  (0x2900e6c0)
+0x29026509  code target (STUB)  (0x290106c0)
+0x29026513  embedded object  (0x2960db31 <String[1]: i>)
+0x29026517  position  (144)
+0x29026518  code target (context) (LOAD_IC)  (0x2900d4a0)
+0x2902653e  position  (145)
+0x2902653f  code target with id (COMPARE_IC)  (0x29014c40) (id=20)
+0x29026548  embedded object  (0x469080a1 <true>)
+0x29026560  embedded object  (0x46908091 <undefined>)
+0x29026564  position  (235)
+0x29026564  js return
+
+
+
+
+--- Raw source ---
+() {
+  for (i=0; i<100000; i++) {
+    ret = FactIf(i%100);
+    print ('--- ' + i + ':'  + ret + '---');
+  }
+}
+
+
+--- Optimized code ---
+kind = OPTIMIZED_FUNCTION
+name = Bench
+stack_slots = 11
+Instructions (size = 1294)
+0x290274a0     0  f7c404000000   test esp,0x4
+0x290274a6     6  741a           jz 34  (0x290274c2)
+0x290274a8     8  6a00           push 0x0
+0x290274aa    10  89e3           mov ebx,esp
+0x290274ac    12  b902000000     mov ecx,0x2
+0x290274b1    17  8b4304         mov eax,[ebx+0x4]
+0x290274b4    20  8903           mov [ebx],eax
+0x290274b6    22  83c304         add ebx,0x4
+0x290274b9    25  49             dec ecx
+0x290274ba    26  75f5           jnz 17  (0x290274b1)
+0x290274bc    28  c70301819046   mov [ebx],0x46908101        ;; object: 0x46908101 <Odd Oddball>
+0x290274c2    34  55             push ebp
+0x290274c3    35  89e5           mov ebp,esp
+0x290274c5    37  56             push esi
+0x290274c6    38  57             push edi
+0x290274c7    39  83ec2c         sub esp,0x2c
+0x290274ca    42  8b45fc         mov eax,[ebp+0xfc]
+0x290274cd    45  8945ec         mov [ebp+0xec],eax
+0x290274d0    48  89c6           mov esi,eax
+0x290274d2    50  3b258c182109   cmp esp,[0x921188c]
+0x290274d8    56  7305           jnc 63  (0x290274df)
+0x290274da    58  e8e191feff     call 0x290106c0             ;; code: STUB, StackCheckStub, minor: 0
+0x290274df    63  33c0           xor eax,eax
+0x290274e1    65  bae190e023     mov edx,0x23e090e1          ;; object: 0x23e090e1 Cell for 109
+0x290274e6    70  817a03c1809046 cmp [edx+0x3],0x469080c1    ;; object: 0x469080c1 <the hole>
+0x290274ed    77  0f84970bde20   jz 0x49e0808a               ;; deoptimization bailout 1
+0x290274f3    83  894203         mov [edx+0x3],eax
+0x290274f6    86  e90d000000     jmp 104  (0x29027508)
+0x290274fb    91  8b75fc         mov esi,[ebp+0xfc]
+0x290274fe    94  8b5df4         mov ebx,[ebp+0xf4]
+0x29027501    97  89f1           mov ecx,esi
+0x29027503    99  e906000000     jmp 110  (0x2902750e)
+0x29027508   104  8b5d08         mov ebx,[ebp+0x8]
+0x2902750b   107  8b4dec         mov ecx,[ebp+0xec]
+0x2902750e   110  895de0         mov [ebp+0xe0],ebx
+0x29027511   113  894de8         mov [ebp+0xe8],ecx
+0x29027514   116  8b7113         mov esi,[ecx+0x13]
+0x29027517   119  8975dc         mov [ebp+0xdc],esi
+0x2902751a   122  8b7e13         mov edi,[esi+0x13]
+0x2902751d   125  897dd8         mov [ebp+0xd8],edi
+0x29027520   128  8b05f490e023   mov eax,[0x23e090f4]        ;; global property cell
+0x29027526   134  8b4013         mov eax,[eax+0x13]
+0x29027529   137  8b5013         mov edx,[eax+0x13]
+0x2902752c   140  8955e4         mov [ebp+0xe4],edx
+0x2902752f   143  8b05e490e023   mov eax,[0x23e090e4]        ;; global property cell
+0x29027535   149  a801           test al,0x1
+0x29027537   151  0f85a2020000   jnz 831  (0x290277df)
+0x2902753d   157  d1f8           sar eax,1
+0x2902753f   159  3da0860100     cmp eax, 0x186a0
+0x29027544   164  0f8d79020000   jnl 803  (0x290277c3)
+0x2902754a   170  b964000000     mov ecx,0x64
+0x2902754f   175  85c0           test eax,eax
+0x29027551   177  7443           jz 246  (0x29027596)
+0x29027553   179  782d           js 226  (0x29027582)
+0x29027555   181  85c9           test ecx,ecx
+0x29027557   183  7902           jns 187  (0x2902755b)
+0x29027559   185  f7d9           neg ecx
+0x2902755b   187  3bc1           cmp eax,ecx
+0x2902755d   189  7c37           jl 246  (0x29027596)
+0x2902755f   191  89ca           mov edx,ecx
+0x29027561   193  83ea01         sub edx,0x1
+0x29027564   196  85d1           test edx,ecx
+0x29027566   198  7504           jnz 204  (0x2902756c)
+0x29027568   200  23c2           and eax,edx
+0x2902756a   202  eb2a           jmp 246  (0x29027596)
+0x2902756c   204  89c2           mov edx,eax
+0x2902756e   206  2bc1           sub eax,ecx
+0x29027570   208  3bc1           cmp eax,ecx
+0x29027572   210  7c22           jl 246  (0x29027596)
+0x29027574   212  2bc1           sub eax,ecx
+0x29027576   214  3bc1           cmp eax,ecx
+0x29027578   216  7c1c           jl 246  (0x29027596)
+0x2902757a   218  2bc1           sub eax,ecx
+0x2902757c   220  3bc1           cmp eax,ecx
+0x2902757e   222  7c16           jl 246  (0x29027596)
+0x29027580   224  89d0           mov eax,edx
+0x29027582   226  99             cdq
+0x29027583   227  85c0           test eax,eax
+0x29027585   229  790b           jns 242  (0x29027592)
+0x29027587   231  f7f9           idiv ecx
+0x29027589   233  85d2           test edx,edx
+0x2902758b   235  7507           jnz 244  (0x29027594)
+0x2902758d   237  e90c0bde20     jmp 0x49e0809e              ;; deoptimization bailout 3
+0x29027592   242  f7f9           idiv ecx
+0x29027594   244  eb02           jmp 248  (0x29027598)
+0x29027596   246  89c2           mov edx,eax
+0x29027598   248  8955d4         mov [ebp+0xd4],edx
+0x2902759b   251  89d0           mov eax,edx
+0x2902759d   253  8b0dd490e023   mov ecx,[0x23e090d4]        ;; global property cell
+0x290275a3   259  81f9d11b9446   cmp ecx,0x46941bd1          ;; object: 0x46941bd1 <JS Function FactIf>
+0x290275a9   265  0f85f90ade20   jnz 0x49e080a8              ;; deoptimization bailout 4
+0x290275af   271  83f801         cmp eax,0x1
+0x290275b2   274  0f8f0a000000   jg 290  (0x290275c2)
+0x290275b8   280  b902000000     mov ecx,0x2
+0x290275bd   285  e98c000000     jmp 430  (0x2902764e)
+0x290275c2   290  89c1           mov ecx,eax
+0x290275c4   292  83e901         sub ecx,0x1
+0x290275c7   295  ff75e4         push [ebp+0xe4]
+0x290275ca   298  03c9           add ecx,ecx
+0x290275cc   300  0f8051020000   jo 899  (0x29027823)
+0x290275d2   306  fff1           push ecx
+0x290275d4   308  bfd11b9446     mov edi,0x46941bd1          ;; object: 0x46941bd1 <JS Function FactIf>
+0x290275d9   313  8b75fc         mov esi,[ebp+0xfc]
+0x290275dc   316  c6c102         mov_b cl,0x2
+0x290275df   319  ff570b         call [edi+0xb]              ;; debug: position 57
+0x290275e2   322  f20f2a4dd4     cvtsi2sd xmm1,[ebp+0xd4]
+0x290275e7   327  a801           test al,0x1
+0x290275e9   329  7425           jz 368  (0x29027610)
+0x290275eb   331  8178ff2181b040 cmp [eax+0xff],0x40b08121    ;; object: 0x40b08121 <Map(elements=1)>
+0x290275f2   338  7415           jz 361  (0x29027609)
+0x290275f4   340  3d91809046     cmp eax, 0x46908091         ;; object: 0x46908091 <undefined>
+0x290275f9   345  0f85bd0ade20   jnz 0x49e080bc              ;; deoptimization bailout 6
+0x290275ff   351  f20f1015103d4608 movsd xmm2,[0x8463d10]
+0x29027607   359  eb0f           jmp 376  (0x29027618)
+0x29027609   361  f20f105003     movsd xmm2,[eax+0x3]
+0x2902760e   366  eb08           jmp 376  (0x29027618)
+0x29027610   368  d1f8           sar eax,1
+0x29027612   370  f20f2ad0       cvtsi2sd xmm2,eax
+0x29027616   374  03c0           add eax,eax
+0x29027618   376  f20f59ca       mulsd xmm1,xmm2
+0x2902761c   380  8b0d94122109   mov ecx,[0x9211294]
+0x29027622   386  89c8           mov eax,ecx
+0x29027624   388  83c00c         add eax,0xc
+0x29027627   391  0f825a020000   jc 999  (0x29027887)
+0x2902762d   397  3b0598122109   cmp eax,[0x9211298]
+0x29027633   403  0f874e020000   ja 999  (0x29027887)
+0x29027639   409  890594122109   mov [0x9211294],eax
+0x2902763f   415  83c101         add ecx,0x1
+0x29027642   418  c741ff2181b040 mov [ecx+0xff],0x40b08121    ;; object: 0x40b08121 <Map(elements=1)>
+0x29027649   425  f20f114903     movsd [ecx+0x3],xmm1
+0x2902764e   430  89c8           mov eax,ecx
+0x29027650   432  bbe990e023     mov ebx,0x23e090e9          ;; object: 0x23e090e9 Cell for 0x5e73b5e1 <Number: 40320>
+0x29027655   437  817b03c1809046 cmp [ebx+0x3],0x469080c1    ;; object: 0x469080c1 <the hole>
+0x2902765c   444  0f84640ade20   jz 0x49e080c6               ;; deoptimization bailout 7
+0x29027662   450  894303         mov [ebx+0x3],eax
+0x29027665   453  a801           test al,0x1
+0x29027667   455  7420           jz 489  (0x29027689)
+0x29027669   457  8d5303         lea edx,[ebx+0x3]
+0x2902766c   460  250000f0ff     and eax, 0xfff00000
+0x29027671   465  f6400c04       test_b [eax+0xc],0x4
+0x29027675   469  7412           jz 489  (0x29027689)
+0x29027677   471  b80000f0ff     mov eax,0xfff00000
+0x2902767c   476  23c3           and eax,ebx
+0x2902767e   478  f6400c08       test_b [eax+0xc],0x8
+0x29027682   482  7405           jz 489  (0x29027689)
+0x29027684   484  e817f8ffff     call 0x29026ea0             ;; code: STUB, RecordWriteStub, minor: 1667
+0x29027689   489  8b05e490e023   mov eax,[0x23e090e4]        ;; global property cell
+0x2902768f   495  3dc1809046     cmp eax, 0x469080c1         ;; object: 0x469080c1 <the hole>
+0x29027694   500  0f84360ade20   jz 0x49e080d0               ;; deoptimization bailout 8
+0x2902769a   506  ba31886129     mov edx,0x29618831          ;; object: 0x29618831 <String[4]: --- >
+0x2902769f   511  8b75e8         mov esi,[ebp+0xe8]
+0x290276a2   514  e899eafeff     call 0x29016140             ;; debug: position 204
+                                                             ;; code: BINARY_OP_IC, UNINITIALIZED
+0x290276a7   519  90             nop
+0x290276a8   520  90             nop
+0x290276a9   521  8945d0         mov [ebp+0xd0],eax
+0x290276ac   524  f7c001000000   test eax,0x1
+0x290276b2   530  0f842c0ade20   jz 0x49e080e4               ;; deoptimization bailout 10
+0x290276b8   536  8b48ff         mov ecx,[eax+0xff]
+0x290276bb   539  f6410780       test_b [ecx+0x7],0x80
+0x290276bf   543  0f85290ade20   jnz 0x49e080ee              ;; deoptimization bailout 11
+0x290276c5   549  8b75e8         mov esi,[ebp+0xe8]
+0x290276c8   552  fff0           push eax
+0x290276ca   554  6835496129     push 0x29614935             ;; object: 0x29614935 <String[1]: :>
+0x290276cf   559  e8cc68ffff     call 0x2901dfa0             ;; debug: position 208
+                                                             ;; code: STUB, StringAddStub, minor: 3
+0x290276d4   564  8b0dec90e023   mov ecx,[0x23e090ec]        ;; global property cell
+0x290276da   570  81f9c1809046   cmp ecx,0x469080c1          ;; object: 0x469080c1 <the hole>
+0x290276e0   576  0f84120ade20   jz 0x49e080f8               ;; deoptimization bailout 12
+0x290276e6   582  8b75e8         mov esi,[ebp+0xe8]
+0x290276e9   585  89c2           mov edx,eax
+0x290276eb   587  89c8           mov eax,ecx
+0x290276ed   589  e84eeafeff     call 0x29016140             ;; debug: position 215
+                                                             ;; code: BINARY_OP_IC, UNINITIALIZED
+0x290276f2   594  90             nop
+0x290276f3   595  90             nop
+0x290276f4   596  8945cc         mov [ebp+0xcc],eax
+0x290276f7   599  f7c001000000   test eax,0x1
+0x290276fd   605  0f84090ade20   jz 0x49e0810c               ;; deoptimization bailout 14
+0x29027703   611  8b48ff         mov ecx,[eax+0xff]
+0x29027706   614  f6410780       test_b [ecx+0x7],0x80
+0x2902770a   618  0f85060ade20   jnz 0x49e08116              ;; deoptimization bailout 15
+0x29027710   624  8b75e8         mov esi,[ebp+0xe8]
+0x29027713   627  fff0           push eax
+0x29027715   629  6841886129     push 0x29618841             ;; object: 0x29618841 <String[3]: --->
+0x2902771a   634  e88168ffff     call 0x2901dfa0             ;; debug: position 221
+                                                             ;; code: STUB, StringAddStub, minor: 3
+0x2902771f   639  8b0db490e023   mov ecx,[0x23e090b4]        ;; global property cell
+0x29027725   645  81f9c1809046   cmp ecx,0x469080c1          ;; object: 0x469080c1 <the hole>
+0x2902772b   651  0f84ef09de20   jz 0x49e08120               ;; deoptimization bailout 16
+0x29027731   657  81f9590f9446   cmp ecx,0x46940f59          ;; object: 0x46940f59 <JS Function print>
+0x29027737   663  0f85ed09de20   jnz 0x49e0812a              ;; deoptimization bailout 17
+0x2902773d   669  ff75d8         push [ebp+0xd8]
+0x29027740   672  fff0           push eax
+0x29027742   674  bf590f9446     mov edi,0x46940f59          ;; object: 0x46940f59 <JS Function print>
+0x29027747   679  8b75fc         mov esi,[ebp+0xfc]
+0x2902774a   682  b801000000     mov eax,0x1
+0x2902774f   687  c6c102         mov_b cl,0x2
+0x29027752   690  ff570b         call [edi+0xb]              ;; debug: position 190
+0x29027755   693  8b05e490e023   mov eax,[0x23e090e4]        ;; global property cell
+0x2902775b   699  a801           test al,0x1
+0x2902775d   701  0f8540010000   jnz 1027  (0x290278a3)
+0x29027763   707  d1f8           sar eax,1
+0x29027765   709  83c001         add eax,0x1
+0x29027768   712  0f80d009de20   jo 0x49e0813e               ;; deoptimization bailout 19
+0x2902776e   718  03c0           add eax,eax
+0x29027770   720  0f805c010000   jo 1074  (0x290278d2)
+0x29027776   726  bae190e023     mov edx,0x23e090e1          ;; object: 0x23e090e1 Cell for 109
+0x2902777b   731  817a03c1809046 cmp [edx+0x3],0x469080c1    ;; object: 0x469080c1 <the hole>
+0x29027782   738  0f84c009de20   jz 0x49e08148               ;; deoptimization bailout 20
+0x29027788   744  894203         mov [edx+0x3],eax
+0x2902778b   747  a801           test al,0x1
+0x2902778d   749  7420           jz 783  (0x290277af)
+0x2902778f   751  8d4a03         lea ecx,[edx+0x3]
+0x29027792   754  250000f0ff     and eax, 0xfff00000
+0x29027797   759  f6400c04       test_b [eax+0xc],0x4
+0x2902779b   763  7412           jz 783  (0x290277af)
+0x2902779d   765  b80000f0ff     mov eax,0xfff00000
+0x290277a2   770  23c2           and eax,edx
+0x290277a4   772  f6400c08       test_b [eax+0xc],0x8
+0x290277a8   776  7405           jz 783  (0x290277af)
+0x290277aa   778  e8f1f9ffff     call 0x290271a0             ;; code: STUB, RecordWriteStub, minor: 1602
+0x290277af   783  8b5de0         mov ebx,[ebp+0xe0]
+0x290277b2   786  8b4de8         mov ecx,[ebp+0xe8]
+0x290277b5   789  8b75dc         mov esi,[ebp+0xdc]
+0x290277b8   792  8b7dd8         mov edi,[ebp+0xd8]
+0x290277bb   795  8b55e4         mov edx,[ebp+0xe4]
+0x290277be   798  e96cfdffff     jmp 143  (0x2902752f)
+0x290277c3   803  b891809046     mov eax,0x46908091          ;; object: 0x46908091 <undefined>
+0x290277c8   808  89ec           mov esp,ebp
+0x290277ca   810  5d             pop ebp
+0x290277cb   811  817c240801819046 cmp [esp+0x8],0x46908101    ;; object: 0x46908101 <Odd Oddball>
+0x290277d3   819  0f8503000000   jnz 828  (0x290277dc)
+0x290277d9   825  c20800         ret 0x8
+0x290277dc   828  c20400         ret 0x4
+0x290277df   831  8178ff2181b040 cmp [eax+0xff],0x40b08121    ;; object: 0x40b08121 <Map(elements=1)>
+0x290277e6   838  0f856609de20   jnz 0x49e08152              ;; deoptimization bailout 21
+0x290277ec   844  f20f104003     movsd xmm0,[eax+0x3]
+0x290277f1   849  f20f2cc0       cvttsd2si eax,xmm0
+0x290277f5   853  f20f2ac8       cvtsi2sd xmm1,eax
+0x290277f9   857  660f2ec1       ucomisd xmm0,xmm1
+0x290277fd   861  0f854f09de20   jnz 0x49e08152              ;; deoptimization bailout 21
+0x29027803   867  0f8a4909de20   jpe 0x49e08152              ;; deoptimization bailout 21
+0x29027809   873  85c0           test eax,eax
+0x2902780b   875  0f850d000000   jnz 894  (0x2902781e)
+0x29027811   881  660f50c0       movmskpd eax,xmm0
+0x29027815   885  83e001         and eax,0x1
+0x29027818   888  0f853409de20   jnz 0x49e08152              ;; deoptimization bailout 21
+0x2902781e   894  e91cfdffff     jmp 159  (0x2902753f)
+0x29027823   899  60             pushad
+0x29027824   900  d1f9           sar ecx,1
+0x29027826   902  81f100000080   xor ecx,0x80000000
+0x2902782c   908  f20f2ac1       cvtsi2sd xmm0,ecx
+0x29027830   912  8b0d94122109   mov ecx,[0x9211294]
+0x29027836   918  89c8           mov eax,ecx
+0x29027838   920  83c00c         add eax,0xc
+0x2902783b   923  0f821e000000   jc 959  (0x2902785f)
+0x29027841   929  3b0598122109   cmp eax,[0x9211298]
+0x29027847   935  0f8712000000   ja 959  (0x2902785f)
+0x2902784d   941  890594122109   mov [0x9211294],eax
+0x29027853   947  83c101         add ecx,0x1
+0x29027856   950  c741ff2181b040 mov [ecx+0xff],0x40b08121    ;; object: 0x40b08121 <Map(elements=1)>
+0x2902785d   957  eb19           jmp 984  (0x29027878)
+0x2902785f   959  c744241800000000 mov [esp+0x18],0x0
+0x29027867   967  8b75fc         mov esi,[ebp+0xfc]
+0x2902786a   970  33c0           xor eax,eax
+0x2902786c   972  bbfa8c2b08     mov ebx,0x82b8cfa
+0x29027871   977  e82a11ffff     call 0x290189a0             ;; code: STUB, CEntryStub, minor: 1
+0x29027876   982  89c1           mov ecx,eax
+0x29027878   984  f20f114103     movsd [ecx+0x3],xmm0
+0x2902787d   989  894c2418       mov [esp+0x18],ecx
+0x29027881   993  61             popad
+0x29027882   994  e94bfdffff     jmp 306  (0x290275d2)
+0x29027887   999  33c9           xor ecx,ecx
+0x29027889  1001  60             pushad
+0x2902788a  1002  8b75fc         mov esi,[ebp+0xfc]
+0x2902788d  1005  33c0           xor eax,eax
+0x2902788f  1007  bbfa8c2b08     mov ebx,0x82b8cfa
+0x29027894  1012  e80711ffff     call 0x290189a0             ;; code: STUB, CEntryStub, minor: 1
+0x29027899  1017  89442418       mov [esp+0x18],eax
+0x2902789d  1021  61             popad
+0x2902789e  1022  e9a6fdffff     jmp 425  (0x29027649)
+0x290278a3  1027  8178ff2181b040 cmp [eax+0xff],0x40b08121    ;; object: 0x40b08121 <Map(elements=1)>
+0x290278aa  1034  0f85ac08de20   jnz 0x49e0815c              ;; deoptimization bailout 22
+0x290278b0  1040  f20f104003     movsd xmm0,[eax+0x3]
+0x290278b5  1045  f20f2cc0       cvttsd2si eax,xmm0
+0x290278b9  1049  f20f2ac8       cvtsi2sd xmm1,eax
+0x290278bd  1053  660f2ec1       ucomisd xmm0,xmm1
+0x290278c1  1057  0f859508de20   jnz 0x49e0815c              ;; deoptimization bailout 22
+0x290278c7  1063  0f8a8f08de20   jpe 0x49e0815c              ;; deoptimization bailout 22
+0x290278cd  1069  e993feffff     jmp 709  (0x29027765)
+0x290278d2  1074  60             pushad
+0x290278d3  1075  d1f8           sar eax,1
+0x290278d5  1077  3500000080     xor eax, 0x80000000
+0x290278da  1082  f20f2ac0       cvtsi2sd xmm0,eax
+0x290278de  1086  8b0594122109   mov eax,[0x9211294]
+0x290278e4  1092  89c1           mov ecx,eax
+0x290278e6  1094  83c10c         add ecx,0xc
+0x290278e9  1097  0f821e000000   jc 1133  (0x2902790d)
+0x290278ef  1103  3b0d98122109   cmp ecx,[0x9211298]
+0x290278f5  1109  0f8712000000   ja 1133  (0x2902790d)
+0x290278fb  1115  890d94122109   mov [0x9211294],ecx
+0x29027901  1121  83c001         add eax,0x1
+0x29027904  1124  c740ff2181b040 mov [eax+0xff],0x40b08121    ;; object: 0x40b08121 <Map(elements=1)>
+0x2902790b  1131  eb17           jmp 1156  (0x29027924)
+0x2902790d  1133  c744241c00000000 mov [esp+0x1c],0x0
+0x29027915  1141  8b75fc         mov esi,[ebp+0xfc]
+0x29027918  1144  33c0           xor eax,eax
+0x2902791a  1146  bbfa8c2b08     mov ebx,0x82b8cfa
+0x2902791f  1151  e87c10ffff     call 0x290189a0             ;; code: STUB, CEntryStub, minor: 1
+0x29027924  1156  f20f114003     movsd [eax+0x3],xmm0
+0x29027929  1161  8944241c       mov [esp+0x1c],eax
+0x2902792d  1165  61             popad
+0x2902792e  1166  e943feffff     jmp 726  (0x29027776)
+0x29027933  1171  90             nop
+0x29027934  1172  90             nop
+0x29027935  1173  90             nop
+0x29027936  1174  90             nop
+0x29027937  1175  90             nop
+
+Deoptimization Input Data (deopt points = 23)
+ index  ast id    argc     pc             
+     0       3       0     63
+     1       3       0     -1
+     2      13       0     -1
+     3      15       0     -1
+     4      15       0     -1
+     5      28       0    322
+     6      28       0     -1
+     7      40       0     -1
+     8      45       0     -1
+     9      52       0    524
+    10      52       0     -1
+    11      52       0     -1
+    12      52       0     -1
+    13      60       0    599
+    14      60       0     -1
+    15      60       0     -1
+    16      60       0     -1
+    17      60       0     -1
+    18      66       0    693
+    19      66       0     -1
+    20      66       0     -1
+    21      11       0     -1
+    22      66       0     -1
+
+Safepoints (size = 118)
+0x290274df    63  00000000100 (sp -> fp)       0
+0x290275e2   322  00011111000 (sp -> fp)       5
+0x290276a7   519  00011111000 (sp -> fp)       9
+0x290276d4   564  01011111000 (sp -> fp)      13
+0x290276f2   594  00011111000 (sp -> fp)      13
+0x2902771f   639  10011111000 (sp -> fp)      18
+0x29027755   693  00011111000 (sp -> fp)      18
+0x29027876   982  00011111000 | ecx | ebx | esi | edi (sp -> fp)  <none>
+0x29027899  1017  00011111000 (sp -> fp)  <none>
+0x29027924  1156  00011111000 | eax (sp -> fp)  <none>
+
+RelocInfo (size = 120)
+0x290274be  embedded object  (0x46908101 <Odd Oddball>)
+0x290274db  code target (STUB)  (0x290106c0)
+0x290274e2  embedded object  (0x23e090e1 Cell for 109)
+0x290274e9  embedded object  (0x469080c1 <the hole>)
+0x290274ef  runtime entry  (deoptimization bailout 1)
+0x29027522  global property cell
+0x29027531  global property cell
+0x2902758e  runtime entry  (deoptimization bailout 3)
+0x2902759f  global property cell
+0x290275a5  embedded object  (0x46941bd1 <JS Function FactIf>)
+0x290275ab  runtime entry  (deoptimization bailout 4)
+0x290275d5  embedded object  (0x46941bd1 <JS Function FactIf>)
+0x290275df  position  (57)
+0x290275ee  embedded object  (0x40b08121 <Map(elements=1)>)
+0x290275f5  embedded object  (0x46908091 <undefined>)
+0x290275fb  runtime entry  (deoptimization bailout 6)
+0x29027645  embedded object  (0x40b08121 <Map(elements=1)>)
+0x29027651  embedded object  (0x23e090e9 Cell for 0x5e73b5e1 <Number: 40320>)
+0x29027658  embedded object  (0x469080c1 <the hole>)
+0x2902765e  runtime entry  (deoptimization bailout 7)
+0x29027685  code target (STUB)  (0x29026ea0)
+0x2902768b  global property cell
+0x29027690  embedded object  (0x469080c1 <the hole>)
+0x29027696  runtime entry  (deoptimization bailout 8)
+0x2902769b  embedded object  (0x29618831 <String[4]: --- >)
+0x290276a2  position  (204)
+0x290276a3  code target (BINARY_OP_IC)  (0x29016140)
+0x290276b4  runtime entry  (deoptimization bailout 10)
+0x290276c1  runtime entry  (deoptimization bailout 11)
+0x290276cb  embedded object  (0x29614935 <String[1]: :>)
+0x290276cf  position  (208)
+0x290276d0  code target (STUB)  (0x2901dfa0)
+0x290276d6  global property cell
+0x290276dc  embedded object  (0x469080c1 <the hole>)
+0x290276e2  runtime entry  (deoptimization bailout 12)
+0x290276ed  position  (215)
+0x290276ee  code target (BINARY_OP_IC)  (0x29016140)
+0x290276ff  runtime entry  (deoptimization bailout 14)
+0x2902770c  runtime entry  (deoptimization bailout 15)
+0x29027716  embedded object  (0x29618841 <String[3]: --->)
+0x2902771a  position  (221)
+0x2902771b  code target (STUB)  (0x2901dfa0)
+0x29027721  global property cell
+0x29027727  embedded object  (0x469080c1 <the hole>)
+0x2902772d  runtime entry  (deoptimization bailout 16)
+0x29027733  embedded object  (0x46940f59 <JS Function print>)
+0x29027739  runtime entry  (deoptimization bailout 17)
+0x29027743  embedded object  (0x46940f59 <JS Function print>)
+0x29027752  position  (190)
+0x29027757  global property cell
+0x2902776a  runtime entry  (deoptimization bailout 19)
+0x29027777  embedded object  (0x23e090e1 Cell for 109)
+0x2902777e  embedded object  (0x469080c1 <the hole>)
+0x29027784  runtime entry  (deoptimization bailout 20)
+0x290277ab  code target (STUB)  (0x290271a0)
+0x290277c4  embedded object  (0x46908091 <undefined>)
+0x290277cf  embedded object  (0x46908101 <Odd Oddball>)
+0x290277e2  embedded object  (0x40b08121 <Map(elements=1)>)
+0x290277e8  runtime entry  (deoptimization bailout 21)
+0x290277ff  runtime entry  (deoptimization bailout 21)
+0x29027805  runtime entry  (deoptimization bailout 21)
+0x2902781a  runtime entry  (deoptimization bailout 21)
+0x29027859  embedded object  (0x40b08121 <Map(elements=1)>)
+0x29027872  code target (STUB)  (0x290189a0)
+0x29027895  code target (STUB)  (0x290189a0)
+0x290278a6  embedded object  (0x40b08121 <Map(elements=1)>)
+0x290278ac  runtime entry  (deoptimization bailout 22)
+0x290278c3  runtime entry  (deoptimization bailout 22)
+0x290278c9  runtime entry  (deoptimization bailout 22)
+0x29027907  embedded object  (0x40b08121 <Map(elements=1)>)
+0x29027920  code target (STUB)  (0x290189a0)
+
