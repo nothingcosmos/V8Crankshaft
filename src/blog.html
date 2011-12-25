@@ -58,7 +58,7 @@
 <p>Crankshaftというのは、JavaScriptエンジンであるV8に
 ここ1年で新規追加された、JITコンパイラになります。</p>
 <p>V8はこの新しいJITコンパイラの追加により、
-V8ベンチマークスーツで*50%性能向上*したようです。</p>
+V8ベンチマークで50%性能向上したようです。</p>
 <img alt="../images/V8Bench.jpg" src="../images/V8Bench.jpg" />
 <p>私は次に読むコンパイラはmozilla系のxxx monkeyにしようと思っていたのですが、</p>
 <p>V8 Crankshaftの50%向上へ非常に興味を持ち、
@@ -257,11 +257,11 @@ Bench();</pre>
 <p>適当にオプションを紹介します。</p>
 <div class="highlight-python"><pre>--trace_hydrogen  カレントのhydornge.cfgにASTやら中間表現を出力する
 
---trace_codegen コンパイルログをstdoutに出力する
+--trace_codegen   コンパイルログをstdoutに出力する
 
---print_ast コンパイル対象のjsのASTをstdoutに出力する
+--print_ast       コンパイル対象のjsのASTをstdoutに出力する
 
---print_code コンパイル後のAsmをstdoutに出力する</pre>
+--print_code      コンパイル後のAsmをstdoutに出力する</pre>
 </div>
 </div>
 <div class="section" id="id9">
@@ -299,13 +299,23 @@ Crankshaft Compiler - *** Generate code for user-defined function: 0x402187d9 &l
 --- 385:2.8171041143805494e+128---
 --- 386:2.4227095383672724e+130---</pre>
 </div>
-<p>上記ログによると、最初に必要なjsをfull-codegenでコンパイルし、hot codeをCrankshaftでrecompileしている。</p>
-<p>実行途中でCrankshaftでRecompileされているメソッドは、Bench()とFactIf()です。</p>
-<p>Bench()をCrankshaftでrecompileしていますが、何度も実行されるループが、hot codeだと判定されたのだと思います。</p>
-<p>ログの出力具合からBench()を実行中なはずです。</p>
-<p>FactIfからのreturnからBench()のCrankshaftしたコードへ遷移しているか、
-ループの実行途中にsafepointを埋め込み、full-codegenのsafepointからCrankshaftが生成したコードへ遷移しているはず</p>
-<p>FactIF()のrecompileが走った理由も、おそらく何度も呼び出されるメソッドであるためだと思います。</p>
+<p>上記ログによると、最初に起動に必要なjsをfull-codegenでコンパイルし、</p>
+<p>hot codeをCrankshaftでrecompileしているようです。</p>
+<p>CrankshaftでRecompileされているメソッドは、Bench()とFactIf()です。</p>
+<p>Bench()</p>
+<blockquote>
+<div><p>ループ長が長いため、hot codeだと判定され、CrankshaftでRecompileされているのだと思います。</p>
+<p>Bench()をRecompileした際には、ログの出力からBench()を実行中なはずです。</p>
+<p>FactIf()のreturnからBench()のCrankshaftが生成したコードへ遷移しているか、</p>
+<p>Crankshaftが生成したコードのループの中にsafepointを埋め込み、</p>
+<p>full-codegenのsafepointからCrankshaftが生成したコードへ遷移しているはずです。</p>
+</div></blockquote>
+<p>FactIF()</p>
+<blockquote>
+<div><p>何度も呼び出されるメソッドであるため、hot codeだと判定され、CrankshaftでRecompileされているのだと思います。</p>
+<p>何度も呼び出されるメソッドの場合、メソッドが次に呼ばれた際に、</p>
+<p>full-codegenが生成したコードではなく、Crankshaftが生成したコードを呼び出せば良いはずです。</p>
+</div></blockquote>
 </div>
 <div class="section" id="gdb-debug">
 <h3>7. gdb debug<a class="headerlink" href="#gdb-debug" title="Permalink to this headline">¶</a></h3>
@@ -345,16 +355,19 @@ if (graph != NULL &amp;&amp; FLAG_build_lithium) {
 </div>
 <p>Crankshaftには、high-level(HIR)な中間表現であるhydrogenと、
 low-level(LIR)な中間表現であるlithiumがあります。</p>
-<p>hydrogenがSSA形式の中間表現で、ここで機種非依存の最適化を行います。</p>
-<p>lithiumが機種依存の中間表現で、mips arm x86/x64向けが用意されており、それぞれのディレクトリ下で定義されています。</p>
-<p>lithiumは3つ組形式で、それぞれのディレクトリ下で機種依存の処理を行ったり、</p>
-<p>継承したクラスのvirtual method経由でレジスタ割り付け等の機種共通の処理が行われるはずです。</p>
+<p>hydrogenはSSA形式の中間表現で、builder.CreateGraph()で機種非依存の最適化を行います。</p>
+<p>lithiumは3つ組形式の、機種依存の中間表現で、</p>
+<p>mips arm x86/x64向けが用意されており、それぞれのディレクトリ下で定義されています。</p>
+<p>graph-&gt;Compile()ではhydrogenから機種依存のlithiumへ変換された後、</p>
+<p>機種依存の最適化、レジスタ割り付け、コード生成を行います。</p>
+<p>レジスタ割り付けなどの機種共通の処理では、</p>
+<p>lithiumのベースクラスから継承したvirtual method経由でレジスタ割り付け等を行うはずです。</p>
 <p>上記の構造は、JVM HotSpot Clientコンパイラと非常によく似ています。</p>
 <img alt="../images/Design_of_the_Java_HotSpot_Client_Compiler_for_Java6.png" src="../images/Design_of_the_Java_HotSpot_Client_Compiler_for_Java6.png" />
 </div>
 <div class="section" id="builder-creategraph">
 <h2>builder.CreateGraph()<a class="headerlink" href="#builder-creategraph" title="Permalink to this headline">¶</a></h2>
-<p>CreateGraph()は、graphベースのhydrogenの作成から、最適化まで行います。</p>
+<p>CreateGraph()は、JavaScriptのASTからgraphベースのhydrogenへの変換、最適化まで行います。</p>
 <p>Hydrogenの大まかな流れ</p>
 <div class="highlight-python"><pre>//graph_の生成
 graph_ = HGraph(info())
@@ -404,8 +417,8 @@ graph()-&gt;ReplacedCheckedValues();</pre>
 </div>
 <div class="section" id="hgraph-compile">
 <h2>HGraph::Compile()<a class="headerlink" href="#hgraph-compile" title="Permalink to this headline">¶</a></h2>
-<p>Compile()は、low-level向けの最適化およびコード生成まで行う</p>
-<p>Lithiumの大まかな流れ</p>
+<p>Compile()は、hydrogenからlithiumへの変換、機種依存の最適化およびコード生成まで行う</p>
+<p>lithiumの大まかな流れ</p>
 <div class="highlight-python"><pre>LAllocator allocator();
 LChunkBuilder builder(info, this, &amp;allocator);
 LChunk* chunk = builder.Build();
@@ -422,9 +435,8 @@ generator.FinishCode(code)
 CodeGenerator::PrintCode(code, info);</pre>
 </div>
 </div>
-</div>
 <div class="section" id="ast-image">
-<h1>AST Image<a class="headerlink" href="#ast-image" title="Permalink to this headline">¶</a></h1>
+<h2>AST Image<a class="headerlink" href="#ast-image" title="Permalink to this headline">¶</a></h2>
 <p>FactIf AST</p>
 <div class="highlight-python"><pre>*** Generate code for user-defined function: 0x53717ff5 &lt;String[6]: FactIf&gt; ***
 --- AST ---
@@ -461,7 +473,7 @@ FUNC
 </div>
 </div>
 <div class="section" id="hydrogen-image">
-<h1>hydrogen image<a class="headerlink" href="#hydrogen-image" title="Permalink to this headline">¶</a></h1>
+<h2>hydrogen image<a class="headerlink" href="#hydrogen-image" title="Permalink to this headline">¶</a></h2>
 <p>FactIf hydrogen</p>
 <div class="highlight-python"><pre>begin_compilation
   name "FactIf"
@@ -470,37 +482,34 @@ FUNC
 end_compilation</pre>
 </div>
 <p class="graphviz">
-<img src="../images/graphviz-905687492af11bb7f2866a997c6f635718ef6e98.png" alt="digraph factFor {
+<img src="../images/graphviz-a07b2f35891a864dbbebfc5995749525e02ea118.png" alt="digraph factIf {
 
-B0 [shape=box, label=&quot; 0 0 v0 BlockEntry  &lt;|&#64; \l 0 1 t1 Constant 0x32e08091 &lt;undefined&gt; &lt;|&#64; \l 0 1 t2 Parameter 0 &lt;|&#64; \l 0 4 t3 Parameter 1 &lt;|&#64; \l 0 5 t4 Context  &lt;|&#64; \l 0 0 v5 Simulate id=2 var[0] = t2, var[1] = t3, var[2] = t4, var[3] = t1 &lt;|&#64; \l 0 0 v6 Goto B1 &lt;|&#64; \l &quot;];
+B0 [shape=box, label=&quot;B0:\l 0 0 v0 BlockEntry  &lt;|&#64; \l 0 1 t1 Constant 0x32e08091 &lt;undefined&gt; &lt;|&#64; \l 0 1 t2 Parameter 0 &lt;|&#64; \l 0 4 t3 Parameter 1 &lt;|&#64; \l 0 5 t4 Context  &lt;|&#64; \l 0 0 v5 Simulate id=2 var[0] = t2, var[1] = t3, var[2] = t4, var[3] = t1 &lt;|&#64; \l 0 0 v6 Goto B1 &lt;|&#64; \l &quot;];
 B0 -&gt; B1;
 
-B1 [shape=box, label=&quot; 0 0 v7 BlockEntry  &lt;|&#64; \l 0 0 v8 Simulate id=3 &lt;|&#64; \l 0 0 v9 StackCheck  &lt;|&#64; \l 0 2 i42 Change t3 t to i range[-2147483648,2147483647,m0=0] &lt;|&#64; \l 0 2 i43 Constant 1 range[1,1,m0=0] &lt;|&#64; \l 0 0 v11 CompareIDAndBranch GT i42 i43 goto (B4, B2) &lt;|&#64; \l &quot;];
+B1 [shape=box, label=&quot;B1:\l 0 0 v7 BlockEntry  &lt;|&#64; \l 0 0 v8 Simulate id=3 &lt;|&#64; \l 0 0 v9 StackCheck  &lt;|&#64; \l 0 2 i42 Change t3 t to i range[-2147483648,2147483647,m0=0] &lt;|&#64; \l 0 2 i43 Constant 1 range[1,1,m0=0] &lt;|&#64; \l 0 0 v11 CompareIDAndBranch GT i42 i43 goto (B4, B2) &lt;|&#64; \l &quot;];
 B1 -&gt; B4;
 B1 -&gt; B2;
 
-B2 [shape=box, label=&quot; 0 0 v15 BlockEntry  &lt;|&#64; \l 0 0 v16 Simulate id=47 &lt;|&#64; \l 0 0 v17 Goto B3 &lt;|&#64; \l &quot;];
+B2 [shape=box, label=&quot;B2:\l 0 0 v15 BlockEntry  &lt;|&#64; \l 0 0 v16 Simulate id=47 &lt;|&#64; \l 0 0 v17 Goto B3 &lt;|&#64; \l &quot;];
 B2 -&gt; B3;
 
-B3 [shape=box, label=&quot; 0 0 v30 BlockEntry  &lt;|&#64; \l 0 2 t31 Constant 1 range[1,1,m0=0] type[smi] &lt;|&#64; \l 0 0 v34 Simulate id=45 var[3] = t31 &lt;|&#64; \l 0 0 v35 Goto B6 &lt;|&#64; \l &quot;];
+B3 [shape=box, label=&quot;B3:\l 0 0 v30 BlockEntry  &lt;|&#64; \l 0 2 t31 Constant 1 range[1,1,m0=0] type[smi] &lt;|&#64; \l 0 0 v34 Simulate id=45 var[3] = t31 &lt;|&#64; \l 0 0 v35 Goto B6 &lt;|&#64; \l &quot;];
 B3 -&gt; B6;
 
-B4 [shape=box, label=&quot; 0 0 v12 BlockEntry  &lt;|&#64; \l 0 0 v13 Simulate id=46 &lt;|&#64; \l 0 0 v14 Goto B5 &lt;|&#64; \l &quot;];
+B4 [shape=box, label=&quot;B4:\l 0 0 v12 BlockEntry  &lt;|&#64; \l 0 0 v13 Simulate id=46 &lt;|&#64; \l 0 0 v14 Goto B5 &lt;|&#64; \l &quot;];
 B4 -&gt; B5;
 
-B5 [shape=box, label=&quot; 0 0 v18 BlockEntry  &lt;|&#64; \l 0 1 t19 GlobalObject t4 &lt;|&#64; \l 0 1 i21 Sub i42 i43 range[1,2147483646,m0=0] &lt;|&#64; \l 0 1 t22 LoadGlobalCell [0x471090d1] &lt;|&#64; \l 0 0 t23 CheckFunction t22 0x32e41645 &lt;|&#64; \l 0 1 t24 GlobalReceiver t19 &lt;|&#64; \l 0 0 t25 PushArgument t24 &lt;|&#64; \l 0 1 t45 Change i21 i to t range[1,2147483646,m0=0] type[number] &lt;|&#64; \l 0 0 t26 PushArgument t45 &lt;|&#64; \l 0 2 t27 CallKnownGlobal o #2 changes[*] &lt;|&#64; \l 0 0 v28 Simulate id=28 push t3, push t27 &lt;|&#64; \l 0 1 d40 Change t3 t to d &lt;|&#64; \l 0 1 d46 Change t27 t to d &lt;|&#64; \l 0 2 d29 Mul d40 d46 ! &lt;|&#64; \l 0 0 v32 Simulate id=45 pop 2 / var[3] = d29 &lt;|&#64; \l 0 1 t47 Change d29 d to t type[heap-number] &lt;|&#64; \l 0 0 v33 Goto B6 &lt;|&#64; \l &quot;];
+B5 [shape=box, label=&quot;B5:\l 0 0 v18 BlockEntry  &lt;|&#64; \l 0 1 t19 GlobalObject t4 &lt;|&#64; \l 0 1 i21 Sub i42 i43 range[1,2147483646,m0=0] &lt;|&#64; \l 0 1 t22 LoadGlobalCell [0x471090d1] &lt;|&#64; \l 0 0 t23 CheckFunction t22 0x32e41645 &lt;|&#64; \l 0 1 t24 GlobalReceiver t19 &lt;|&#64; \l 0 0 t25 PushArgument t24 &lt;|&#64; \l 0 1 t45 Change i21 i to t range[1,2147483646,m0=0] type[number] &lt;|&#64; \l 0 0 t26 PushArgument t45 &lt;|&#64; \l 0 2 t27 CallKnownGlobal o #2 changes[*] &lt;|&#64; \l 0 0 v28 Simulate id=28 push t3, push t27 &lt;|&#64; \l 0 1 d40 Change t3 t to d &lt;|&#64; \l 0 1 d46 Change t27 t to d &lt;|&#64; \l 0 2 d29 Mul d40 d46 ! &lt;|&#64; \l 0 0 v32 Simulate id=45 pop 2 / var[3] = d29 &lt;|&#64; \l 0 1 t47 Change d29 d to t type[heap-number] &lt;|&#64; \l 0 0 v33 Goto B6 &lt;|&#64; \l &quot;];
 B5 -&gt; B6;
 
-B6 [shape=box, label=&quot; begin_HIR 0 0 v37 BlockEntry  &lt;|&#64; \l 0 0 v38 Return t36 &lt;|&#64; \l &quot;];
-B6 -&gt; B5;
-B6 -&gt; B3;
-
+B6 [shape=box, label=&quot;B6:\l 0 0 v37 BlockEntry  &lt;|&#64; \l 0 0 v38 Return t36 &lt;|&#64; \l &quot;];
 }" />
 </p>
 </div>
 <div class="section" id="lithium-image">
-<h1>Lithium image<a class="headerlink" href="#lithium-image" title="Permalink to this headline">¶</a></h1>
-<p>FactIf Lithium:</p>
+<h2>lithium image<a class="headerlink" href="#lithium-image" title="Permalink to this headline">¶</a></h2>
+<p>FactIf lithium:</p>
 <div class="highlight-python"><pre>begin_compilation
   name "FactIf"
   method "FactIf"
@@ -508,32 +517,31 @@ B6 -&gt; B3;
 end_compilation</pre>
 </div>
 <p class="graphviz">
-<img src="../images/graphviz-49de1ca6ce435e68d00cf187f9aced1cb26d6eb6.png" alt="digraph factFor {
+<img src="../images/graphviz-65de50b1cf80feb3a9d373269df947fcbbee93ec.png" alt="digraph factIf {
 
-B0 [shape=box, label=&quot; begin_LIR \l 0 label () () () ()  &lt;|&#64; \l 2 gap () () () ()  &lt;|&#64; \l 4 parameter [stack:-2]=  &lt;|&#64; \l 6 gap () ([stack:-2];) () ()  &lt;|&#64; \l 8 parameter [stack:-1]=  &lt;|&#64; \l 10 gap () ([stack:-1];) () ()  &lt;|&#64; \l 12 context [eax|R]=  &lt;|&#64; \l 14 gap ([stack:0] = [eax|R];) () () ()  &lt;|&#64; \l 16 gap () () () ()  &lt;|&#64; \l 18 goto B1 &lt;|&#64; \l end_LIR \l &quot;];
+B0 [shape=box, label=&quot;B0:\l 0 label () () () ()  &lt;|&#64; \l 2 gap () () () ()  &lt;|&#64; \l 4 parameter [stack:-2]=  &lt;|&#64; \l 6 gap () ([stack:-2];) () ()  &lt;|&#64; \l 8 parameter [stack:-1]=  &lt;|&#64; \l 10 gap () ([stack:-1];) () ()  &lt;|&#64; \l 12 context [eax|R]=  &lt;|&#64; \l 14 gap ([stack:0] = [eax|R];) () () ()  &lt;|&#64; \l 16 gap () () () ()  &lt;|&#64; \l 18 goto B1 &lt;|&#64; \l &quot;];
 B0 -&gt; B1;
 
-B1 [shape=box, label=&quot; begin_LIR \l 20 label () () () ()  &lt;|&#64; \l 22 gap () ([esi|R] = [eax|R];) () ()  &lt;|&#64; \l 24 stack-check = [esi|R] [id=3|[parameters=2|[arguments_stack_height=0|[stack:-2];[stack:-1];[constant:1]] {[esi|R];[stack:0];[eax|R]} &#64;-1 &lt;|&#64; \l 26 gap () ([eax|R] = [stack:-1];) () ()  &lt;|&#64; \l 28 tagged-to-i [eax|R]= [eax|R] [id=3|[parameters=2|[arguments_stack_height=0|[stack:-2];[stack:-1];[constant:1]] &lt;|&#64; \l 30 gap (v0(0) = [eax|R];) () () ()  &lt;|&#64; \l 32 gap () () () ()  &lt;|&#64; \l 34 cmp-id-and-branch if [eax|R] &gt; [constant:43] then B4 else B2 &lt;|&#64;  \l end_LIR \l &quot;];
+B1 [shape=box, label=&quot;B1:\l 20 label () () () ()  &lt;|&#64; \l 22 gap () ([esi|R] = [eax|R];) () ()  &lt;|&#64; \l 24 stack-check = [esi|R] [id=3|[parameters=2|[arguments_stack_height=0|[stack:-2];[stack:-1];[constant:1]] {[esi|R];[stack:0];[eax|R]} &#64;-1 &lt;|&#64; \l 26 gap () ([eax|R] = [stack:-1];) () ()  &lt;|&#64; \l 28 tagged-to-i [eax|R]= [eax|R] [id=3|[parameters=2|[arguments_stack_height=0|[stack:-2];[stack:-1];[constant:1]] &lt;|&#64; \l 30 gap (v0(0) = [eax|R];) () () ()  &lt;|&#64; \l 32 gap () () () ()  &lt;|&#64; \l 34 cmp-id-and-branch if [eax|R] &gt; [constant:43] then B4 else B2 &lt;|&#64;  \l &quot;];
 B1 -&gt; B4;
 B1 -&gt; B2;
 
-B2 [shape=box, label=&quot; begin_LIR \l 36 label () () () ()  Dead block replaced with B3 &lt;|&#64; \l 38 gap () () () ()  &lt;|&#64; \l 40 gap () () () ()  &lt;|&#64; \l 42 goto B3 &lt;|&#64; \l end_LIR \l &quot;];
+B2 [shape=box, label=&quot;B2:\l 36 label () () () ()  Dead block replaced with B3 &lt;|&#64; \l 38 gap () () () ()  &lt;|&#64; \l 40 gap () () () ()  &lt;|&#64; \l 42 goto B3 &lt;|&#64; \l &quot;];
 B2 -&gt; B3;
 
-B3 [shape=box, label=&quot; begin_LIR \l 44 label () () () ()  &lt;|&#64; \l 46 gap () () () ()  &lt;|&#64; \l 48 gap () ([ecx|R] = [constant:31];) () ()  &lt;|&#64; \l 50 goto B6 &lt;|&#64; \l end_LIR \l &quot;];
+B3 [shape=box, label=&quot;B3:\l 44 label () () () ()  &lt;|&#64; \l 46 gap () () () ()  &lt;|&#64; \l 48 gap () ([ecx|R] = [constant:31];) () ()  &lt;|&#64; \l 50 goto B6 &lt;|&#64; \l &quot;];
 B3 -&gt; B6;
 
-B4 [shape=box, label=&quot; begin_LIR \l 52 label () () () ()  Dead block replaced with B5 &lt;|&#64; \l 54 gap () () () ()  &lt;|&#64; \l 56 gap () () () ()  &lt;|&#64; \l 58 goto B5 &lt;|&#64; \l end_LIR \l &quot;];
+B4 [shape=box, label=&quot;B4:\l 52 label () () () ()  Dead block replaced with B5 &lt;|&#64; \l 54 gap () () () ()  &lt;|&#64; \l 56 gap () () () ()  &lt;|&#64; \l 58 goto B5 &lt;|&#64; \l &quot;];
 B4 -&gt; B5;
 
-B5 [shape=box, label=&quot; begin_LIR \l 60 label () () () ()  &lt;|&#64; \l 62 gap () () ([ecx|R] = [stack:0];) ()  &lt;|&#64; \l 64 global-object [ecx|R]= [ecx|R] &lt;|&#64; \l 66 gap (v0(0) = [ecx|R];) ([eax|R];) () ()  &lt;|&#64; \l 68 sub-i [eax|R]= [eax|R] [constant:43] &lt;|&#64; \l 70 gap (v0(0) = [eax|R];) () () ()  &lt;|&#64; \l 72 load-global-cell [edx|R]=  &lt;|&#64; \l 74 gap (v0(0) = [edx|R];) () () ()  &lt;|&#64; \l 76 check-function = [edx|R] [id=46|[parameters=2|[arguments_stack_height=0|[stack:-2];[stack:-1];[constant:1]] &lt;|&#64; \l 78 gap () () () ()  &lt;|&#64; \l 80 global-receiver [ecx|R]= [ecx|R] &lt;|&#64; \l 82 gap (v0(0) = [ecx|R];) () () ()  &lt;|&#64; \l 84 push-argument = [ecx|R] &lt;|&#64; \l 86 gap () ([eax|R];) () ()  &lt;|&#64; \l 88 number-tag-i [eax|R]= [eax|R] [id=46|[parameters=2|[arguments_stack_height=1|[stack:-2];[stack:-1];[constant:1]] {[eax|R]} &#64;66 &lt;|&#64; \l 90 gap (v0(0) = [eax|R];) () () ()  &lt;|&#64; \l 92 push-argument = [eax|R] &lt;|&#64; \l 94 gap () () () ()  &lt;|&#64; \l 96 call-known-global [eax|R]#1 /  {} &#64;57 &lt;|&#64; \l 98 gap (v0(0) = [eax|R];) ([eax|R];) () ()  &lt;|&#64; \l 100 lazy-bailout =  [id=28|[parameters=2|[arguments_stack_height=0|[stack:-2];[stack:-1];[constant:1];[stack:-1];[eax|R]] &lt;|&#64; \l 102 gap () () ([ecx|R] = [stack:-1];) ()  &lt;|&#64; \l 104 double-untag [xmm1|R]= [ecx|R] [id=28|[parameters=2|[arguments_stack_height=0|[stack:-2];[ecx|R];[constant:1];[ecx|R];[eax|R]] &lt;|&#64; \l 106 gap (v0(0) = [xmm1|R];) () () ()  &lt;|&#64; \l 108 double-untag [xmm2|R]= [eax|R] [id=28|[parameters=2|[arguments_stack_height=0|[stack:-2];[ecx|R];[constant:1];[ecx|R];[eax|R]] &lt;|&#64; \l 110 gap (v0(0) = [xmm2|R];) ([xmm1|R];) () ()  &lt;|&#64; \l 112 mul-d [xmm1|R]= [xmm1|R] [xmm2|R] &lt;|&#64; \l 114 gap (v0(0) = [xmm1|R];) () () ()  &lt;|&#64; \l 116 number-tag-d [ecx|R]= [xmm1|R] {} &#64;55 &lt;|&#64; \l 118 gap (v0(0) = [ecx|R];) () () ()  &lt;|&#64; \l 120 gap () ([ecx|R];) () ()  &lt;|&#64; \l 122 goto B6 &lt;|&#64; \l end_LIR \l &quot;];
+B5 [shape=box, label=&quot;B5:\l 60 label () () () ()  &lt;|&#64; \l 62 gap () () ([ecx|R] = [stack:0];) ()  &lt;|&#64; \l 64 global-object [ecx|R]= [ecx|R] &lt;|&#64; \l 66 gap (v0(0) = [ecx|R];) ([eax|R];) () ()  &lt;|&#64; \l 68 sub-i [eax|R]= [eax|R] [constant:43] &lt;|&#64; \l 70 gap (v0(0) = [eax|R];) () () ()  &lt;|&#64; \l 72 load-global-cell [edx|R]=  &lt;|&#64; \l 74 gap (v0(0) = [edx|R];) () () ()  &lt;|&#64; \l 76 check-function = [edx|R] [id=46|[parameters=2|[arguments_stack_height=0|[stack:-2];[stack:-1];[constant:1]] &lt;|&#64; \l 78 gap () () () ()  &lt;|&#64; \l 80 global-receiver [ecx|R]= [ecx|R] &lt;|&#64; \l 82 gap (v0(0) = [ecx|R];) () () ()  &lt;|&#64; \l 84 push-argument = [ecx|R] &lt;|&#64; \l 86 gap () ([eax|R];) () ()  &lt;|&#64; \l 88 number-tag-i [eax|R]= [eax|R] [id=46|[parameters=2|[arguments_stack_height=1|[stack:-2];[stack:-1];[constant:1]] {[eax|R]} &#64;66 &lt;|&#64; \l 90 gap (v0(0) = [eax|R];) () () ()  &lt;|&#64; \l 92 push-argument = [eax|R] &lt;|&#64; \l 94 gap () () () ()  &lt;|&#64; \l 96 call-known-global [eax|R]#1 /  {} &#64;57 &lt;|&#64; \l 98 gap (v0(0) = [eax|R];) ([eax|R];) () ()  &lt;|&#64; \l 100 lazy-bailout =  [id=28|[parameters=2|[arguments_stack_height=0|[stack:-2];[stack:-1];[constant:1];[stack:-1];[eax|R]] &lt;|&#64; \l 102 gap () () ([ecx|R] = [stack:-1];) ()  &lt;|&#64; \l 104 double-untag [xmm1|R]= [ecx|R] [id=28|[parameters=2|[arguments_stack_height=0|[stack:-2];[ecx|R];[constant:1];[ecx|R];[eax|R]] &lt;|&#64; \l 106 gap (v0(0) = [xmm1|R];) () () ()  &lt;|&#64; \l 108 double-untag [xmm2|R]= [eax|R] [id=28|[parameters=2|[arguments_stack_height=0|[stack:-2];[ecx|R];[constant:1];[ecx|R];[eax|R]] &lt;|&#64; \l 110 gap (v0(0) = [xmm2|R];) ([xmm1|R];) () ()  &lt;|&#64; \l 112 mul-d [xmm1|R]= [xmm1|R] [xmm2|R] &lt;|&#64; \l 114 gap (v0(0) = [xmm1|R];) () () ()  &lt;|&#64; \l 116 number-tag-d [ecx|R]= [xmm1|R] {} &#64;55 &lt;|&#64; \l 118 gap (v0(0) = [ecx|R];) () () ()  &lt;|&#64; \l 120 gap () ([ecx|R];) () ()  &lt;|&#64; \l 122 goto B6 &lt;|&#64; \l &quot;];
 B5 -&gt; B6;
 
-B6 [shape=box, label=&quot; begin_LIR \l 124 label () (v0(0) = [ecx|R];) () ()  &lt;|&#64; \l 126 gap () ([eax|R] = [ecx|R];) () ()  &lt;|&#64; \l 128 return = [eax|R] &lt;|&#64; \l 130 gap () () () ()  &lt;|&#64; \l end_LIR \l &quot;];
-B6 -&gt; B5;
-B6 -&gt; B3;
+B6 [shape=box, label=&quot;B6:\l 124 label () (v0(0) = [ecx|R];) () ()  &lt;|&#64; \l 126 gap () ([eax|R] = [ecx|R];) () ()  &lt;|&#64; \l 128 return = [eax|R] &lt;|&#64; \l 130 gap () () () ()  &lt;|&#64; \l &quot;];
 }" />
 </p>
+</div>
 <div class="section" id="crankshaft-generate-code">
 <h2>Crankshaft generate code<a class="headerlink" href="#crankshaft-generate-code" title="Permalink to this headline">¶</a></h2>
 <p>入力ソース</p>
@@ -699,21 +707,33 @@ Safepoints (size = 48)
 <h2>まとめ<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h2>
 <p>関数を再帰で呼び出すあたりのコードが複雑でよくわからんです。</p>
 <p>色々なチェック処理が前後で入っていますね。</p>
+<p>チェック処理がJavaScript依存であり、除去が難しいのであれば、</p>
+<p>Dartでは除去できるように設計されているかもしれません。</p>
+<div class="section" id="crankshaftjvm-hotspot-c1">
+<h3>CrankshaftとJVM HotSpot C1<a class="headerlink" href="#crankshaftjvm-hotspot-c1" title="Permalink to this headline">¶</a></h3>
 <p>Crankshaftの内部構造に関しては、下記のBlogが非常に詳しいです。</p>
 <p>wingolog
 <a class="reference external" href="http://wingolog.org/tags/v8">http://wingolog.org/tags/v8</a></p>
-<p>上記ブログによると、CrankshaftがJVM HotSpot C1のパクリというか、インスパイアしているらしいのですが、
-同意します。</p>
-<p>正確には、C1.3くらいですか。</p>
-<p>xxx monkeyがJavaと同等を目指す云々の話も、
-Crankshaftの作りと比較すると、現実的な目標のようの思いました。</p>
-<p>JVM HotSpotと比較すれば、V8がJITコンパイルの改良によって性能向上できる余地は残っているように思います。</p>
-<p>V8ベンチマークは再帰が多いため、V8に有利だという話もありますが、
-ループを多用したベンチマークの性能を上げたければ、
-Crankshaftにヘビーなループ最適化を導入すれば性能向上するかもしれません。</p>
-<p>どのような最適化を実装するかの判断は、どのようなベンチマークをターゲットにするかに依存するように思います。</p>
-<p>そのため、V8とセットのV8ベンチマークの提供は、V8の方向性を示しており非常に面白いと思います。</p>
+<p>上記ブログによると、CrankshaftがJVM HotSpot C1のパクリというか、インスパイアしているらしいです。</p>
+<p>C1というより、C1.3くらいですが。</p>
+<p>CrankshaftがJVM HotSpot C1から様々な技術を取り入れ、高速化されているように思いましたが、</p>
+<p>xxx monkeyはJavaと同等の速度を目指すらしいのですが、</p>
+<p>Crankshaftを見習ってJVM HotSpot C1/C2から取り入れるのであれば、</p>
+<p>現実的な目標のようの思いました。</p>
+<p>JVM HotSpotと比較すれば、CrankshaftもJITコンパイルの改良によって性能向上できる余地は残っているように思います。</p>
+<p>参考までに、以前作った OpenJDKのHotSpot C1の資料です。</p>
+<p><a class="reference external" href="http://nothingcosmos.github.com/OpenJDKOverview/">http://nothingcosmos.github.com/OpenJDKOverview/</a></p>
+</div>
+<div class="section" id="v8v8">
+<h3>V8とV8ベンチマーク<a class="headerlink" href="#v8v8" title="Permalink to this headline">¶</a></h3>
+<p>V8とセットのV8ベンチマークの提供は、V8の方向性を示しており非常に面白いと思っています。</p>
+<p>V8ベンチマークは再帰が多いため、xxx monkeyと比較してV8に有利だという話もありますが、</p>
+<p>どのような最適化を実装するか否かの判断は、ターゲットにしているベンチマークに依存するはずです。</p>
+<p>ループを多用したベンチマークの性能を上げたければ、</p>
+<p>Crankshaftにヘビーなループ最適化を導入すればよいのに、現状はそうなっていない。</p>
 <p>V8ベンチマークが、V8の性能向上の指針として非常に重要なのだと思います。</p>
+<p>※  他のベンチマーク結果も参考にしていると思いますが、詳しいことはよくわかりません。</p>
+</div>
 </div>
 </div>
 
@@ -729,9 +749,26 @@ Crankshaftにヘビーなループ最適化を導入すれば性能向上する�
 
       </div>
 
+
     <div class="footer">
         &copy; Copyright 2011, nothingcosmos.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.
     </div>
+
+<script type="text/javascript">
+
+var _gaq = _gaq || [];
+_gaq.push(['_setAccount', 'UA-15223787-3']);
+_gaq.push(['_trackPageview']);
+
+(function() {
+ var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+ ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+ })();
+
+</script>
+
+
   </body>
 </html>
