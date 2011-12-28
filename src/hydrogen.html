@@ -102,8 +102,8 @@ ia32/lithium-ia32</p>
 <div class="section" id="hphase">
 <h3>HPhase<a class="headerlink" href="#hphase" title="Permalink to this headline">¶</a></h3>
 <blockquote>
-<div>HGraph* <a href="#id3"><span class="problematic" id="id4">graph_</span></a>;
-LChunk* <a href="#id5"><span class="problematic" id="id6">chunk_</span></a>;
+<div>HGraph* <a href="#id4"><span class="problematic" id="id5">graph_</span></a>;
+LChunk* <a href="#id6"><span class="problematic" id="id7">chunk_</span></a>;
 LAllocator* allocator;</div></blockquote>
 </div>
 </div>
@@ -114,9 +114,41 @@ LAllocator* allocator;</div></blockquote>
 </div>
 <div class="section" id="linstruction">
 <h3>LInstruction<a class="headerlink" href="#linstruction" title="Permalink to this headline">¶</a></h3>
-<hr class="docutils" />
-<hr class="docutils" />
 </div>
+</div>
+</div>
+<hr class="docutils" />
+<div class="section" id="id3">
+<h1>疑問点<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="phinode">
+<h2>PHINode<a class="headerlink" href="#phinode" title="Permalink to this headline">¶</a></h2>
+<p>おそらくPHINodeは、cfgをコントロールするノード程度の意味で存在するはず。
+そのため、C1ではなく、C2みたいなグラフ系のPHINodeの意味のはず</p>
+<p>hydrogen.cfg</p>
+<div class="highlight-python"><pre>begin_block
+  name "B6"
+  from_bci -1
+  to_bci -1
+  predecessors "B5" "B3"
+  successors
+  xhandlers
+  flags
+  dominator "B1"
+  loop_depth 0
+  begin_states
+    begin_locals
+      size 1
+      method "None"
+      3 t36 [ d29  t31  uses1_0i_0d_0t]
+    end_locals
+  end_states
+  begin_HIR
+    0 0 v37 BlockEntry  &lt;|@
+    0 0 v38 Return t36 &lt;|@     &lt;-- t36は、localsの中で定義されたphinodeのはず。
+  end_HIR
+end_block</pre>
+</div>
+<hr class="docutils" />
 </div>
 </div>
 

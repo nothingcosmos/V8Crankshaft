@@ -94,9 +94,9 @@ Deoptimizationとは、
 
   Crankshaftは、最初にコンパイルした汎用的なコードに戻すようです。
 
-  JVM HotSpotは、JITコンパイルしたコードの途中から、インタプリタ実行に戻したりします。
+  JVM HotSpotは、JITコンパイルしたコードの途中から、インタプリタ実行に戻します。
 
-  戻したりするにはランタイム側の協力が必要で、JITコンパイラ特有の機能になります。
+  戻すにはランタイム側の協力が必要で、JITコンパイラ特有の機能になります。
 
 
 type infomation correctとは、
@@ -319,7 +319,7 @@ FactIF()
 
   full-codegenが生成したコードではなく、Crankshaftが生成したコードを呼び出せば良いはずです。
 
-7. gdb debug
+8. gdb debug
 -----------------------------------------------------------
 
 gdbでbreakできます ::
@@ -528,7 +528,25 @@ FactIf hydrogen ::
   B5 -> B6;
 
   B6 [shape=box, label="B6:\l 0 0 v37 BlockEntry  <|@ \l 0 0 v38 Return t36 <|@ \l "];
+
+  B6_locals [shape=box, label="B6_locals \l predecessors "B5" "B3" \l 3 t36 [ t47  t31  uses1_0i_0d_1t_live] "];
+  B6_locals -> B6;
   }
+
+PHIの存在
+--------------------------------------------------------------------------------
+
+  B6_localsがPHIを表現していて、
+
+  B5から来た場合は、t36はt47と等しく、B3から来た場合は、t36はt31と等しい。
+
+  t36は、B6でReturn t36される。 つまりt36はvar pを指す。
+
+  PHIがBlock中のIRとして表現されていない点、
+
+  またHydrogenがgraph baseということらしいので、
+
+  JVM HotSpot C1 のHIRより、JVM HotSpot C2 のIdeal IRに近いのかもしれません。
 
 lithium image
 ================================================================================
@@ -610,18 +628,18 @@ x86 generated code ::
   0x29027a2d    45  0f8f0a000000   jg 61  (0x29027a3d)
   0x29027a33    51  b902000000     mov ecx,0x2
   0x29027a38    56  e9d7000000     jmp 276  (0x29027b14)       <-- if !(n>1) goto 276
-  0x29027a3d    61  8b4df4         mov ecx,[ebp+0xf4]          <-- p = n * FactIf(n-1);
+  0x29027a3d    61  8b4df4         mov ecx,[ebp+0xf4]          <-- // 以降が p = n * FactIf(n-1);に該当する
   0x29027a40    64  8b4913         mov ecx,[ecx+0x13]
-  0x29027a43    67  83e801         sub eax,0x1                 <-- n - 1
-  0x29027a46    70  8b15d490e023   mov edx,[0x23e090d4]        ;; global property cell
-  0x29027a4c    76  81fad11b9446   cmp edx,0x46941bd1          ;; object: 0x46941bd1 <JS Function FactIf>
-  0x29027a52    82  0f853206de20   jnz 0x49e0808a              ;; deoptimization bailout 1
-  0x29027a58    88  8b4913         mov ecx,[ecx+0x13]
+  0x29027a43    67  83e801         sub eax,0x1                 <-- eax = n - 1
+  0x29027a46    70  8b15d490e023   mov edx,[0x23e090d4]        ;; global property cell  // 呼び出すproperty callのチェック
+  0x29027a4c    76  81fad11b9446   cmp edx,0x46941bd1          ;; object: 0x46941bd1 <JS Function FactIf> <--想定するFactIf
+  0x29027a52    82  0f853206de20   jnz 0x49e0808a              ;; deoptimization bailout 1 //想定するcallでない場合、bailout
+  0x29027a58    88  8b4913         mov ecx,[ecx+0x13]          <-- 隠れ引数。thisポインタでも設定してるんでしょうかね？
   0x29027a5b    91  fff1           push ecx
   0x29027a5d    93  03c0           add eax,eax
-  0x29027a5f    95  0f80e6000000   jo 331  (0x29027b4b)
+  0x29027a5f    95  0f80e6000000   jo 331  (0x29027b4b)        <-- まさかのオーバーフローチェック。
   0x29027a65   101  fff0           push eax                    <-- argument set n
-  0x29027a67   103  bfd11b9446     mov edi,0x46941bd1          ;; object: 0x46941bd1 <JS Function FactIf>
+  0x29027a67   103  bfd11b9446     mov edi,0x46941bd1          ;; object: 0x46941bd1 <JS Function FactIf> <--想定するFactIf
   0x29027a6c   108  8b75fc         mov esi,[ebp+0xfc]
   0x29027a6f   111  c6c102         mov_b cl,0x2
   0x29027a72   114  e889ffffff     call 0  (0x29027a00)        ;; debug: position 57
@@ -664,7 +682,7 @@ x86 generated code ::
   0x29027b05   261  83c101         add ecx,0x1
   0x29027b08   264  c741ff2181b040 mov [ecx+0xff],0x40b08121    ;; object: 0x40b08121 <Map(elements=1)>
   0x29027b0f   271  f20f114903     movsd [ecx+0x3],xmm1
-  0x29027b14   276  89c8           mov eax,ecx
+  0x29027b14   276  89c8           mov eax,ecx                 <-- if (n<=0)の場合はここに飛んでくる ecx = 0x2
   0x29027b16   278  89ec           mov esp,ebp
   0x29027b18   280  5d             pop ebp
   0x29027b19   281  c20800         ret 0x8                     <-- return p
@@ -677,7 +695,7 @@ x86 generated code ::
   0x29027b3a   314  0f857205de20   jnz 0x49e080b2              ;; deoptimization bailout 5
   0x29027b40   320  0f8a6c05de20   jpe 0x49e080b2              ;; deoptimization bailout 5
   0x29027b46   326  e9dffeffff     jmp 42  (0x29027a2a)
-  0x29027b4b   331  60             pushad
+  0x29027b4b   331  60             pushad                      <-- overflowした場合はここに飛んでくる
   0x29027b4c   332  d1f8           sar eax,1
   0x29027b4e   334  3500000080     xor eax, 0x80000000
   0x29027b53   339  f20f2ac0       cvtsi2sd xmm0,eax
@@ -734,9 +752,13 @@ x86 generated code ::
 まとめ
 ================================================================================
 
-関数を再帰で呼び出すあたりのコードが複雑でよくわからんです。
+FactIfを呼び出す前に、global propertyからFactIf(var n)を取り出して、
 
-色々なチェック処理が前後で入っていますね。
+FactIf(int n)か判定してるというイメージで良いのでしょうか。
+
+引数の型ごとにFactIfのバージョンを作ってるのかなーと勝手に想像しています。
+
+他にも色々なチェック処理が前後で入っていますね。
 
 チェック処理がJavaScript依存であり、除去が難しいのであれば、
 
@@ -754,7 +776,9 @@ http://wingolog.org/tags/v8
 
 C1というより、C1.3くらいですが。
 
-CrankshaftがJVM HotSpot C1から様々な技術を取り入れ、高速化されているように思いましたが、
+CrankshaftがJVM HotSpot C1から様々な技術を取り入れ、高速化されているように思いました。
+
+※  wikipediaによると、HotSpotの人がリーダーらしいです。
 
 xxx monkeyはJavaと同等の速度を目指すらしいのですが、
 
