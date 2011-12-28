@@ -55,7 +55,7 @@ copyright = u'2011, nothingcosmos'
 # built documents.
 #
 # The short X.Y version.
-version = '1.2'
+version = '1.3'
 # The full version, including alpha/beta/rc tags.
 release = '1.0'
 

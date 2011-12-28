@@ -6,18 +6,20 @@ overview
 
 V8のJITコンパイラは2種類
 
-full-codegen
+(1) full-codegen
 
-crankshaft
+  jsをインタプリタ実行せず、汎用的に動作するコードを生成するコンパイラ
 
-Crankshaftは、V8に搭載されたJITコンパイラの名前
+(2) crankshaft
 
-JavaScriptのASTをhigh-levelなSSA形式のIR(Hydrogen)へ変換する。
-Hydrogenは、graphベースらしい
+  Crankshaftは、V8に搭載されたJITコンパイラの名前
 
-Hydrogenを機種依存のlow-levelなIR(Lithium)へ変換する。
+  JavaScriptのASTをhigh-levelなSSA形式のIR(Hydrogen)へ変換する。
+  Hydrogenは、graphベースらしい
 
-機種依存コードは、arm mips ia32/x64が用意されている
+  Hydrogenを機種依存のlow-levelなIR(Lithium)へ変換する。
+
+  機種依存コードは、arm mips ia32/x64が用意されている
 
 
 構成
@@ -35,13 +37,15 @@ src/ia32/XX 43k step
 
 src/x64/XX  44k step
 
-hydrogen               8.5kstep
-hydrogen-instructions  6.5kstep
-lithium                  1kstep
-lithium-allocator      3.0kstep
+Crankshaft関連のファイル::
 
-ia32/lithium*         10  kstep
-ia32/codegen           0.7kstep
+  hydrogen               8.5kstep
+  hydrogen-instructions  6.5kstep
+  lithium                  1kstep
+  lithium-allocator      3.0kstep
+
+  ia32/lithium*         10  kstep
+  ia32/codegen           0.7kstep
 
 
 keyword
