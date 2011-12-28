@@ -529,7 +529,7 @@ FactIf hydrogen ::
 
   B6 [shape=box, label="B6:\l 0 0 v37 BlockEntry  <|@ \l 0 0 v38 Return t36 <|@ \l "];
 
-  B6_locals [shape=box, label="B6_locals \l predecessors "B5" "B3" \l 3 t36 [ t47  t31  uses1_0i_0d_1t_live] "];
+  B6_locals [shape=box, label="B6_locals: \l predecessors B5, B3 \l 3 t36 [ t47  t31  uses1_0i_0d_1t_live] \l "];
   B6_locals -> B6;
   }
 

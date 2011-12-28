@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>V8のJITコンパイラ、Crankshaftについて &mdash; V8 Crankshaft Overview 1.0 documentation</title>
+    <title>V8のJITコンパイラ、Crankshaftについて &mdash; V8 Crankshaft Overview 1.3 documentation</title>
     
     <link rel="stylesheet" href="../static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.0',
+        VERSION:     '1.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,12 +27,12 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <script type="text/javascript" src="../_static/theme_extras.js"></script>
-    <link rel="top" title="V8 Crankshaft Overview 1.0 documentation" href="../index.html" />
+    <link rel="top" title="V8 Crankshaft Overview 1.3 documentation" href="../index.html" />
     <link rel="prev" title="Welcome to V8 Crankshaft Internals’s documentation!" href="../index.html" /> 
   </head>
   <body>
       <div class="header"><h1 class="heading"><a href="../index.html">
-          <span>V8 Crankshaft Overview 1.0 documentation</span></a></h1>
+          <span>V8 Crankshaft Overview 1.3 documentation</span></a></h1>
         <h2 class="heading"><span>V8のJITコンパイラ、Crankshaftについて</span></h2>
       </div>
       <div class="topnav">
@@ -482,7 +482,7 @@ FUNC
 end_compilation</pre>
 </div>
 <p class="graphviz">
-<img src="../images/graphviz-f45d3cbaa6dd6c6a3d754e2c09d9b90d5a636706.png" alt="digraph factIf {
+<img src="../images/graphviz-a59fafdf3fe3456265cc058fb0c3524226f8e5eb.png" alt="digraph factIf {
 
 B0 [shape=box, label=&quot;B0:\l 0 0 v0 BlockEntry  &lt;|&#64; \l 0 1 t1 Constant 0x32e08091 &lt;undefined&gt; &lt;|&#64; \l 0 1 t2 Parameter 0 &lt;|&#64; \l 0 4 t3 Parameter 1 &lt;|&#64; \l 0 5 t4 Context  &lt;|&#64; \l 0 0 v5 Simulate id=2 var[0] = t2, var[1] = t3, var[2] = t4, var[3] = t1 &lt;|&#64; \l 0 0 v6 Goto B1 &lt;|&#64; \l &quot;];
 B0 -&gt; B1;
@@ -505,7 +505,7 @@ B5 -&gt; B6;
 
 B6 [shape=box, label=&quot;B6:\l 0 0 v37 BlockEntry  &lt;|&#64; \l 0 0 v38 Return t36 &lt;|&#64; \l &quot;];
 
-B6_locals [shape=box, label=&quot;B6_locals \l predecessors &quot;B5&quot; &quot;B3&quot; \l 3 t36 [ t47  t31  uses1_0i_0d_1t_live] &quot;];
+B6_locals [shape=box, label=&quot;B6_locals: \l predecessors B5, B3 \l 3 t36 [ t47  t31  uses1_0i_0d_1t_live] \l &quot;];
 B6_locals -&gt; B6;
 }" />
 </p>
