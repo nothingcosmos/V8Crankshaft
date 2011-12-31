@@ -116,7 +116,7 @@ hydrogen.cfg ::
       begin_locals
         size 1
         method "None"
-        3 t36 [ d29  t31  uses1_0i_0d_0t]
+        3 t36 [ d29  t31  uses1_0i_0d_0t]  <-- phi
       end_locals
     end_states
     begin_HIR
