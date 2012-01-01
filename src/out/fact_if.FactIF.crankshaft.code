@@ -154,34 +154,34 @@ Instructions (size = 512)
 0x29027a10    16  3b258c182109   cmp esp,[0x921188c]
 0x29027a16    22  7305           jnc 29  (0x29027a1d)
 0x29027a18    24  e8a38cfeff     call 0x290106c0             ;; code: STUB, StackCheckStub, minor: 0
-0x29027a1d    29  8b4508         mov eax,[ebp+0x8]
-0x29027a20    32  a801           test al,0x1
-0x29027a22    34  0f85f4000000   jnz 284  (0x29027b1c)
-0x29027a28    40  d1f8           sar eax,1
-0x29027a2a    42  83f801         cmp eax,0x1
-0x29027a2d    45  0f8f0a000000   jg 61  (0x29027a3d)
-0x29027a33    51  b902000000     mov ecx,0x2
-0x29027a38    56  e9d7000000     jmp 276  (0x29027b14)
-0x29027a3d    61  8b4df4         mov ecx,[ebp+0xf4]
+0x29027a1d    29  8b4508         mov eax,[ebp+0x8]           <-- 引数n
+0x29027a20    32  a801           test al,0x1                 <-- nの最下位ビットのチェック
+0x29027a22    34  0f85f4000000   jnz 284  (0x29027b1c)       <-- 1がたっているheap objectの場合はgoto 284へ つまりnがsmiであることのguard
+0x29027a28    40  d1f8           sar eax,1                   <-- 最下位1bitのsmi/heapフラグをshift rightで潰す
+0x29027a2a    42  83f801         cmp eax,0x1                 <-- if (n>1)
+0x29027a2d    45  0f8f0a000000   jg 61  (0x29027a3d)         <-- then goto 61
+0x29027a33    51  b902000000     mov ecx,0x2                 <-- n = 1 //
+0x29027a38    56  e9d7000000     jmp 276  (0x29027b14)       <-- else goto 276
+0x29027a3d    61  8b4df4         mov ecx,[ebp+0xf4]          <-- // 以降が p = n * FactIf(n-1)
 0x29027a40    64  8b4913         mov ecx,[ecx+0x13]
-0x29027a43    67  83e801         sub eax,0x1
-0x29027a46    70  8b15d490e023   mov edx,[0x23e090d4]        ;; global property cell
-0x29027a4c    76  81fad11b9446   cmp edx,0x46941bd1          ;; object: 0x46941bd1 <JS Function FactIf>
-0x29027a52    82  0f853206de20   jnz 0x49e0808a              ;; deoptimization bailout 1
+0x29027a43    67  83e801         sub eax,0x1                 <-- n-1
+0x29027a46    70  8b15d490e023   mov edx,[0x23e090d4]        ;; global property cell  // 呼び出すproperty callのチェック
+0x29027a4c    76  81fad11b9446   cmp edx,0x46941bd1          ;; object: 0x46941bd1 <JS Function FactIf> <-- 想定するFactIf
+0x29027a52    82  0f853206de20   jnz 0x49e0808a              ;; deoptimization bailout 1 // 想定するFactIfでない場合、bailout
 0x29027a58    88  8b4913         mov ecx,[ecx+0x13]
-0x29027a5b    91  fff1           push ecx
+0x29027a5b    91  fff1           push ecx                    <-- 恐らくthis pointer みたいなもの
 0x29027a5d    93  03c0           add eax,eax
 0x29027a5f    95  0f80e6000000   jo 331  (0x29027b4b)
 0x29027a65   101  fff0           push eax
 0x29027a67   103  bfd11b9446     mov edi,0x46941bd1          ;; object: 0x46941bd1 <JS Function FactIf>
 0x29027a6c   108  8b75fc         mov esi,[ebp+0xfc]
 0x29027a6f   111  c6c102         mov_b cl,0x2
-0x29027a72   114  e889ffffff     call 0  (0x29027a00)        ;; debug: position 57
+0x29027a72   114  e889ffffff     call 0  (0x29027a00)        ;; debug: position 57  <-- call FactIf 再帰呼び出し
                                                              ;; code: OPTIMIZED_FUNCTION
-0x29027a77   119  8b4d08         mov ecx,[ebp+0x8]
-0x29027a7a   122  f6c101         test_b cl,0x1
-0x29027a7d   125  7426           jz 165  (0x29027aa5)
-0x29027a7f   127  8179ff2181b040 cmp [ecx+0xff],0x40b08121    ;; object: 0x40b08121 <Map(elements=1)>
+0x29027a77   119  8b4d08         mov ecx,[ebp+0x8]           <-- 返り値のチェック、 
+0x29027a7a   122  f6c101         test_b cl,0x1               <-- heap objectだったら
+0x29027a7d   125  7426           jz 165  (0x29027aa5)        <-- smiだったらgoto 165
+0x29027a7f   127  8179ff2181b040 cmp [ecx+0xff],0x40b08121    ;; object: 0x40b08121 <Map(elements=1)> <-- heap objectのケース
 0x29027a86   134  7416           jz 158  (0x29027a9e)
 0x29027a88   136  81f991809046   cmp ecx,0x46908091          ;; object: 0x46908091 <undefined>
 0x29027a8e   142  0f850a06de20   jnz 0x49e0809e              ;; deoptimization bailout 3
@@ -189,11 +189,11 @@ Instructions (size = 512)
 0x29027a9c   156  eb0f           jmp 173  (0x29027aad)
 0x29027a9e   158  f20f104903     movsd xmm1,[ecx+0x3]
 0x29027aa3   163  eb08           jmp 173  (0x29027aad)
-0x29027aa5   165  d1f9           sar ecx,1
+0x29027aa5   165  d1f9           sar ecx,1                   <-- FactIfの返値がsmiのケース、返値ecxの下位ビット削り
 0x29027aa7   167  f20f2ac9       cvtsi2sd xmm1,ecx
-0x29027aab   171  03c9           add ecx,ecx
-0x29027aad   173  a801           test al,0x1
-0x29027aaf   175  7425           jz 214  (0x29027ad6)
+0x29027aab   171  03c9           add ecx,ecx                 <-- 返値のsmiのオーバーフローチェック
+0x29027aad   173  a801           test al,0x1                 <-- n * の、nのsmiチェック
+0x29027aaf   175  7425           jz 214  (0x29027ad6)        <-- smiの場合は、goto 214
 0x29027ab1   177  8178ff2181b040 cmp [eax+0xff],0x40b08121    ;; object: 0x40b08121 <Map(elements=1)>
 0x29027ab8   184  7415           jz 207  (0x29027acf)
 0x29027aba   186  3d91809046     cmp eax, 0x46908091         ;; object: 0x46908091 <undefined>
@@ -202,10 +202,10 @@ Instructions (size = 512)
 0x29027acd   205  eb0f           jmp 222  (0x29027ade)
 0x29027acf   207  f20f105003     movsd xmm2,[eax+0x3]
 0x29027ad4   212  eb08           jmp 222  (0x29027ade)
-0x29027ad6   214  d1f8           sar eax,1
+0x29027ad6   214  d1f8           sar eax,1                   <-- 下位ビット削り
 0x29027ad8   216  f20f2ad0       cvtsi2sd xmm2,eax
 0x29027adc   220  03c0           add eax,eax
-0x29027ade   222  f20f59ca       mulsd xmm1,xmm2
+0x29027ade   222  f20f59ca       mulsd xmm1,xmm2             <-- n * FactIf()
 0x29027ae2   226  8b0d94122109   mov ecx,[0x9211294]
 0x29027ae8   232  89c8           mov eax,ecx
 0x29027aea   234  83c00c         add eax,0xc
@@ -215,12 +215,12 @@ Instructions (size = 512)
 0x29027aff   255  890594122109   mov [0x9211294],eax
 0x29027b05   261  83c101         add ecx,0x1
 0x29027b08   264  c741ff2181b040 mov [ecx+0xff],0x40b08121    ;; object: 0x40b08121 <Map(elements=1)>
-0x29027b0f   271  f20f114903     movsd [ecx+0x3],xmm1
-0x29027b14   276  89c8           mov eax,ecx
+0x29027b0f   271  f20f114903     movsd [ecx+0x3],xmm1         <-- 返値格納
+0x29027b14   276  89c8           mov eax,ecx                  <-- if (! n > 1) ecx = 0x2
 0x29027b16   278  89ec           mov esp,ebp
 0x29027b18   280  5d             pop ebp
-0x29027b19   281  c20800         ret 0x8
-0x29027b1c   284  8178ff2181b040 cmp [eax+0xff],0x40b08121    ;; object: 0x40b08121 <Map(elements=1)>
+0x29027b19   281  c20800         ret 0x8                      <-- FactIfの終了
+0x29027b1c   284  8178ff2181b040 cmp [eax+0xff],0x40b08121    ;; object: 0x40b08121 <Map(elements=1)> <-- nのguard nがheap objectのケース
 0x29027b23   291  0f858905de20   jnz 0x49e080b2              ;; deoptimization bailout 5
 0x29027b29   297  f20f104003     movsd xmm0,[eax+0x3]
 0x29027b2e   302  f20f2cc0       cvttsd2si eax,xmm0

@@ -46,14 +46,14 @@ builder.CreateGraph()
   graph()->EliminateUnreachablePhis();
   graph()->CollectPhis();
   
-  HInferRepresentation rep(graph());
+  HInferRepresentation rep(graph());   <-- 
   rep.Analyze()
   
   graph()->MarkDeoptimizeOnUndefined();
   graph()->InsertRepresentationChanges();
   
-  graph()->InitializeInferredTypes();  <-- 型推論らしい
-  graph()->Canonicalize();
+  graph()->InitializeInferredTypes();  <-- 型推論
+  graph()->Canonicalize();             <-- 型推論の結果を参照して冗長な型チェックを削除する
   
   HGlobalValueNumberer gvn()       <-- GVN
   gvn.Analyze()
