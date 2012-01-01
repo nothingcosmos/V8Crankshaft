@@ -52,7 +52,7 @@ builder.CreateGraph()
   graph()->MarkDeoptimizeOnUndefined();
   graph()->InsertRepresentationChanges();
   
-  graph()->InitializeInferredTypes();
+  graph()->InitializeInferredTypes();  <-- 型推論らしい
   graph()->Canonicalize();
   
   HGlobalValueNumberer gvn()       <-- GVN
@@ -100,6 +100,8 @@ Optimizeの詳細
 
 HGlobalValueNumberer::AnalyzeBlock
 ================================================================================
+
+  AnalyzeBlockなのに、副作用ありでがんがん最適化していく
 
 
 HGlobalValueNumberer::LoopInvariantCodeMotion()
@@ -185,6 +187,43 @@ HRangeAnalysis::Analyze
 ================================================================================
 
 todo
+
+
+HGraph::Canonicalize()
+================================================================================
+
+void HGraph::Canonicalize() ::
+
+  ブロックを走査しながら、
+    ブロック中のInstrを走査しながら、
+      instr->Canonicalize()を叩いてまわる
+      // if (value != instr) instr->DeleteAndReplaceWith(value);
+      副作用があれば、旧ノードを消して、旧ノードの使用点を新しいノードが引き継ぐ
+
+Canonicalize()の詳細
+--------------------------------------------------------------------------------
+
+型推論後のinstr前提の処理であり、
+
+型が確定しているNodeの冗長なチェック処理を削除していく
+
+
+見どころ
+--------------------------------------------------------------------------------
+
+instr->DeleteAndReplaceWith(value)の詳細 ::
+
+  if (other != NULL) ReplaceAllUsesWith(other);
+  ClearOperands();
+  DeleteFromGraph();
+
+ReplaceAllUsesWithとか、llvmを参考にしてるように思う。
+
+でも中間表現はgraphベースだから、最適化のアルゴリズムは難しい。
+
+
+
+
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------

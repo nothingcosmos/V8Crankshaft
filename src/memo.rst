@@ -45,3 +45,33 @@ cd v8
 shell
 > for (var n in function () { return this } ()) print(n)
 
+
+疑問点
+###############################################################################
+
+V8の生成するx86コードは、なぜintegerを2倍にして扱っているのだろうか。return 1は 0x2だし、3は0x6だし、print(5)すら、push 0x5してるんだけど。
+
+-> 最下位1bitは、smi(smallinteger)か、heappointerかの判定で使用しているため.
+
+
+representation inference
+-------------------------------------------------------------------------------
+
+int32かdoubleへ変換され、box化が解除されること
+
+first pass
+  phiをたどる。phiのoperandがi32であるかどうか。phiの使用でi32へ変換されているかどうかをみる
+  i32への変換可能性をみる
+
+second pass
+  phiに、悲観的に変換できないものとして、マークをつけていく
+
+third pass
+  phi math-abs binary bitwise arith operation
+  タグづけ処理
+  i32はタグなし
+
+
+
+
+

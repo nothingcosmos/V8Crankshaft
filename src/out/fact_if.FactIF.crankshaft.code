@@ -25,42 +25,42 @@ Instructions (size = 144)
 0x29026672    18  e849a0feff     call 0x290106c0             ;; debug: statement 15
                                                              ;; code: STUB, StackCheckStub, minor: 0
 0x29026677    23  ff7508         push [ebp+0x8]
-0x2902667a    26  b802000000     mov eax,0x2
+0x2902667a    26  b802000000     mov eax,0x2                 <-- (n > 1)の1を表現するはず  下位1bitはsmiかheapかの判定で使うらしい
 0x2902667f    31  5a             pop edx
-0x29026680    32  e83be6feff     call 0x29014cc0             ;; debug: statement 32
+0x29026680    32  e83be6feff     call 0x29014cc0             ;; debug: statement 32   <-- たぶんcmp命令
                                                              ;; debug: position 38
-                                                             ;; code: COMPARE_IC, UNINITIALIZED (id = 12)
+                                                             ;; code: COMPARE_IC, UNINITIALIZED (id = 12)  <-- CompareIC
 0x29026685    37  90             nop
 0x29026686    38  eb10           jmp 56  (0x29026698)
 0x29026688    40  3da1809046     cmp eax, 0x469080a1         ;; object: 0x469080a1 <true>
 0x2902668d    45  0f840d000000   jz 64  (0x290266a0)
-0x29026693    51  e93a000000     jmp 114  (0x290266d2)
+0x29026693    51  e93a000000     jmp 114  (0x290266d2)       <-- goto false case
 0x29026698    56  85c0           test eax,eax
-0x2902669a    58  0f8e32000000   jng 114  (0x290266d2)
-0x290266a0    64  ff7508         push [ebp+0x8]
+0x2902669a    58  0f8e32000000   jng 114  (0x290266d2)       <-- goto false case
+0x290266a0    64  ff7508         push [ebp+0x8]              <-- true case
 0x290266a3    67  ff7613         push [esi+0x13]
 0x290266a6    70  ff7508         push [ebp+0x8]
-0x290266a9    73  b802000000     mov eax,0x2
+0x290266a9    73  b802000000     mov eax,0x2                 <-- 1を表現するはず
 0x290266ae    78  5a             pop edx
-0x290266af    79  e80cdbfeff     call 0x290141c0             ;; debug: statement 49
+0x290266af    79  e80cdbfeff     call 0x290141c0             ;; debug: statement 49   <-- n-1を表現するはず
                                                              ;; debug: position 66
                                                              ;; code: BINARY_OP_IC, UNINITIALIZED (id = 26)
 0x290266b4    84  90             nop
 0x290266b5    85  50             push eax
 0x290266b6    86  b9e9876129     mov ecx,0x296187e9          ;; object: 0x296187e9 <String[6]: FactIf>
-0x290266bb    91  e8e0fffeff     call 0x290166a0             ;; debug: statement 49
+0x290266bb    91  e8e0fffeff     call 0x290166a0             ;; debug: statement 49  <-- call FactIf
                                                              ;; debug: position 57
                                                              ;; code: contextual, CALL_IC, UNINITIALIZED, argc = 1
 0x290266c0    96  8b75fc         mov esi,[ebp+0xfc]
 0x290266c3    99  5a             pop edx
-0x290266c4   100  e8b7d1ffff     call 0x29023880             ;; debug: position 55
+0x290266c4   100  e8b7d1ffff     call 0x29023880             ;; debug: position 55         <-- n * を表現するはず
                                                              ;; code: BINARY_OP_IC, UNINITIALIZED (id = 31)
 0x290266c9   105  90             nop
 0x290266ca   106  8945f4         mov [ebp+0xf4],eax
-0x290266cd   109  e908000000     jmp 122  (0x290266da)
-0x290266d2   114  b802000000     mov eax,0x2
+0x290266cd   109  e908000000     jmp 122  (0x290266da)       <-- goto join block
+0x290266d2   114  b802000000     mov eax,0x2                 <-- false case
 0x290266d7   119  8945f4         mov [ebp+0xf4],eax
-0x290266da   122  8b45f4         mov eax,[ebp+0xf4]
+0x290266da   122  8b45f4         mov eax,[ebp+0xf4]          <-- join block
 0x290266dd   125  89ec           mov esp,ebp                 ;; debug: statement 100
                                                              ;; debug: position 110
                                                              ;; js return
