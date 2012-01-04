@@ -34,10 +34,10 @@ Instructions (size = 144)
 0x29026686    38  eb10           jmp 56  (0x29026698)
 0x29026688    40  3da1809046     cmp eax, 0x469080a1         ;; object: 0x469080a1 <true>
 0x2902668d    45  0f840d000000   jz 64  (0x290266a0)
-0x29026693    51  e93a000000     jmp 114  (0x290266d2)       <-- goto false case
+0x29026693    51  e93a000000     jmp 114  (0x290266d2)       <-- goto false block
 0x29026698    56  85c0           test eax,eax
-0x2902669a    58  0f8e32000000   jng 114  (0x290266d2)       <-- goto false case
-0x290266a0    64  ff7508         push [ebp+0x8]              <-- true case
+0x2902669a    58  0f8e32000000   jng 114  (0x290266d2)       <-- goto false block
+0x290266a0    64  ff7508         push [ebp+0x8]              <-- start true block
 0x290266a3    67  ff7613         push [esi+0x13]
 0x290266a6    70  ff7508         push [ebp+0x8]
 0x290266a9    73  b802000000     mov eax,0x2                 <-- 1を表現するはず
@@ -58,9 +58,9 @@ Instructions (size = 144)
 0x290266c9   105  90             nop
 0x290266ca   106  8945f4         mov [ebp+0xf4],eax
 0x290266cd   109  e908000000     jmp 122  (0x290266da)       <-- goto join block
-0x290266d2   114  b802000000     mov eax,0x2                 <-- false case
+0x290266d2   114  b802000000     mov eax,0x2                 <-- start false block
 0x290266d7   119  8945f4         mov [ebp+0xf4],eax
-0x290266da   122  8b45f4         mov eax,[ebp+0xf4]          <-- join block
+0x290266da   122  8b45f4         mov eax,[ebp+0xf4]          <-- start join block
 0x290266dd   125  89ec           mov esp,ebp                 ;; debug: statement 100
                                                              ;; debug: position 110
                                                              ;; js return
@@ -136,7 +136,6 @@ RelocInfo (size = 40)
   }
   return p;
 }
-
 
 --- Optimized code ---
 kind = OPTIMIZED_FUNCTION

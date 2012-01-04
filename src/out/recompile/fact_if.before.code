@@ -1,0 +1,188 @@
+--- Raw source ---
+(n) {
+  var p;
+  if (n > 1) {
+    p = n * FactIf(n - 1);
+  } else {
+    p = 1;
+  }
+  return p;
+}
+
+
+--- Optimized code ---
+kind = OPTIMIZED_FUNCTION
+name = FactIf
+stack_slots = 2
+Instructions (size = 552)
+0x2fb28a80     0  55             push ebp
+0x2fb28a81     1  89e5           mov ebp,esp
+0x2fb28a83     3  56             push esi
+0x2fb28a84     4  57             push edi
+0x2fb28a85     5  83ec08         sub esp,0x8
+0x2fb28a88     8  8b45fc         mov eax,[ebp+0xfc]
+0x2fb28a8b    11  8945f4         mov [ebp+0xf4],eax
+0x2fb28a8e    14  89c6           mov esi,eax
+0x2fb28a90    16  3b258c484608   cmp esp,[0x846488c]
+0x2fb28a96    22  7305           jnc 29  (0x2fb28a9d)
+0x2fb28a98    24  e8237cfeff     call 0x2fb106c0             ;; code: STUB, StackCheckStub, minor: 0
+0x2fb28a9d    29  8b4508         mov eax,[ebp+0x8]
+0x2fb28aa0    32  a801           test al,0x1
+0x2fb28aa2    34  0f857d000000   jnz 165  (0x2fb28b25)
+0x2fb28aa8    40  d1f8           sar eax,1
+0x2fb28aaa    42  8945f0         mov [ebp+0xf0],eax
+0x2fb28aad    45  83f801         cmp eax,0x1
+0x2fb28ab0    48  0f8f0a000000   jg 64  (0x2fb28ac0)
+0x2fb28ab6    54  b802000000     mov eax,0x2
+0x2fb28abb    59  e95f000000     jmp 159  (0x2fb28b1f)
+0x2fb28ac0    64  8b4df4         mov ecx,[ebp+0xf4]
+0x2fb28ac3    67  8b4913         mov ecx,[ecx+0x13]
+0x2fb28ac6    70  89c2           mov edx,eax
+0x2fb28ac8    72  83ea01         sub edx,0x1
+0x2fb28acb    75  8b1dd490e042   mov ebx,[0x42e090d4]        ;; global property cell
+0x2fb28ad1    81  81fb751f343b   cmp ebx,0x3b341f75          ;; object: 0x3b341f75 <JS Function FactIf>
+0x2fb28ad7    87  0f85adf51d87   jnz 0xb6d0808a              ;; deoptimization bailout 1
+0x2fb28add    93  8b4913         mov ecx,[ecx+0x13]
+0x2fb28ae0    96  fff1           push ecx
+0x2fb28ae2    98  03d2           add edx,edx
+0x2fb28ae4   100  0f807f000000   jo 233  (0x2fb28b69)
+0x2fb28aea   106  fff2           push edx
+0x2fb28aec   108  bf751f343b     mov edi,0x3b341f75          ;; object: 0x3b341f75 <JS Function FactIf>
+0x2fb28af1   113  8b75fc         mov esi,[ebp+0xfc]
+0x2fb28af4   116  c6c102         mov_b cl,0x2
+0x2fb28af7   119  e884ffffff     call 0  (0x2fb28a80)        ;; debug: position 58
+                                                             ;; code: OPTIMIZED_FUNCTION
+0x2fb28afc   124  89c1           mov ecx,eax
+0x2fb28afe   126  f6c101         test_b cl,0x1
+0x2fb28b01   129  0f85c6000000   jnz 333  (0x2fb28bcd)
+0x2fb28b07   135  d1f9           sar ecx,1
+0x2fb28b09   137  8b55f0         mov edx,[ebp+0xf0]
+0x2fb28b0c   140  0fafd1         imul edx,ecx
+0x2fb28b0f   143  0f8089f51d87   jo 0xb6d0809e               ;; deoptimization bailout 3
+0x2fb28b15   149  89d0           mov eax,edx
+0x2fb28b17   151  03c0           add eax,eax
+0x2fb28b19   153  0f80f2000000   jo 401  (0x2fb28c11)
+0x2fb28b1f   159  89ec           mov esp,ebp
+0x2fb28b21   161  5d             pop ebp
+0x2fb28b22   162  c20800         ret 0x8
+0x2fb28b25   165  8178ff2181203a cmp [eax+0xff],0x3a208121    ;; object: 0x3a208121 <Map(elements=1)>
+0x2fb28b2c   172  0f8576f51d87   jnz 0xb6d080a8              ;; deoptimization bailout 4
+0x2fb28b32   178  f20f104003     movsd xmm0,[eax+0x3]
+0x2fb28b37   183  f20f2cc0       cvttsd2si eax,xmm0
+0x2fb28b3b   187  f20f2ac8       cvtsi2sd xmm1,eax
+0x2fb28b3f   191  660f2ec1       ucomisd xmm0,xmm1
+0x2fb28b43   195  0f855ff51d87   jnz 0xb6d080a8              ;; deoptimization bailout 4
+0x2fb28b49   201  0f8a59f51d87   jpe 0xb6d080a8              ;; deoptimization bailout 4
+0x2fb28b4f   207  85c0           test eax,eax
+0x2fb28b51   209  0f850d000000   jnz 228  (0x2fb28b64)
+0x2fb28b57   215  660f50c0       movmskpd eax,xmm0
+0x2fb28b5b   219  83e001         and eax,0x1
+0x2fb28b5e   222  0f8544f51d87   jnz 0xb6d080a8              ;; deoptimization bailout 4
+0x2fb28b64   228  e941ffffff     jmp 42  (0x2fb28aaa)
+0x2fb28b69   233  60             pushad
+0x2fb28b6a   234  d1fa           sar edx,1
+0x2fb28b6c   236  81f200000080   xor edx,0x80000000
+0x2fb28b72   242  f20f2ac2       cvtsi2sd xmm0,edx
+0x2fb28b76   246  8b1594424608   mov edx,[0x8464294]
+0x2fb28b7c   252  89d0           mov eax,edx
+0x2fb28b7e   254  83c00c         add eax,0xc
+0x2fb28b81   257  0f821e000000   jc 293  (0x2fb28ba5)
+0x2fb28b87   263  3b0598424608   cmp eax,[0x8464298]
+0x2fb28b8d   269  0f8712000000   ja 293  (0x2fb28ba5)
+0x2fb28b93   275  890594424608   mov [0x8464294],eax
+0x2fb28b99   281  83c201         add edx,0x1
+0x2fb28b9c   284  c742ff2181203a mov [edx+0xff],0x3a208121    ;; object: 0x3a208121 <Map(elements=1)>
+0x2fb28ba3   291  eb19           jmp 318  (0x2fb28bbe)
+0x2fb28ba5   293  c744241400000000 mov [esp+0x14],0x0
+0x2fb28bad   301  8b75fc         mov esi,[ebp+0xfc]
+0x2fb28bb0   304  33c0           xor eax,eax
+0x2fb28bb2   306  bbfa8c2b08     mov ebx,0x82b8cfa
+0x2fb28bb7   311  e8c4eefeff     call 0x2fb17a80             ;; code: STUB, CEntryStub, minor: 1
+0x2fb28bbc   316  89c2           mov edx,eax
+0x2fb28bbe   318  f20f114203     movsd [edx+0x3],xmm0
+0x2fb28bc3   323  89542414       mov [esp+0x14],edx
+0x2fb28bc7   327  61             popad
+0x2fb28bc8   328  e91dffffff     jmp 106  (0x2fb28aea)
+0x2fb28bcd   333  8179ff2181203a cmp [ecx+0xff],0x3a208121    ;; object: 0x3a208121 <Map(elements=1)>
+0x2fb28bd4   340  0f85d8f41d87   jnz 0xb6d080b2              ;; deoptimization bailout 5
+0x2fb28bda   346  f20f104103     movsd xmm0,[ecx+0x3]
+0x2fb28bdf   351  f20f2cc8       cvttsd2si ecx,xmm0
+0x2fb28be3   355  f20f2ac9       cvtsi2sd xmm1,ecx
+0x2fb28be7   359  660f2ec1       ucomisd xmm0,xmm1
+0x2fb28beb   363  0f85c1f41d87   jnz 0xb6d080b2              ;; deoptimization bailout 5
+0x2fb28bf1   369  0f8abbf41d87   jpe 0xb6d080b2              ;; deoptimization bailout 5
+0x2fb28bf7   375  85c9           test ecx,ecx
+0x2fb28bf9   377  0f850d000000   jnz 396  (0x2fb28c0c)
+0x2fb28bff   383  660f50c8       movmskpd ecx,xmm0
+0x2fb28c03   387  83e101         and ecx,0x1
+0x2fb28c06   390  0f85a6f41d87   jnz 0xb6d080b2              ;; deoptimization bailout 5
+0x2fb28c0c   396  e9f8feffff     jmp 137  (0x2fb28b09)
+0x2fb28c11   401  60             pushad
+0x2fb28c12   402  d1f8           sar eax,1
+0x2fb28c14   404  3500000080     xor eax, 0x80000000
+0x2fb28c19   409  f20f2ac0       cvtsi2sd xmm0,eax
+0x2fb28c1d   413  8b0594424608   mov eax,[0x8464294]
+0x2fb28c23   419  89c1           mov ecx,eax
+0x2fb28c25   421  83c10c         add ecx,0xc
+0x2fb28c28   424  0f821e000000   jc 460  (0x2fb28c4c)
+0x2fb28c2e   430  3b0d98424608   cmp ecx,[0x8464298]
+0x2fb28c34   436  0f8712000000   ja 460  (0x2fb28c4c)
+0x2fb28c3a   442  890d94424608   mov [0x8464294],ecx
+0x2fb28c40   448  83c001         add eax,0x1
+0x2fb28c43   451  c740ff2181203a mov [eax+0xff],0x3a208121    ;; object: 0x3a208121 <Map(elements=1)>
+0x2fb28c4a   458  eb17           jmp 483  (0x2fb28c63)
+0x2fb28c4c   460  c744241c00000000 mov [esp+0x1c],0x0
+0x2fb28c54   468  8b75fc         mov esi,[ebp+0xfc]
+0x2fb28c57   471  33c0           xor eax,eax
+0x2fb28c59   473  bbfa8c2b08     mov ebx,0x82b8cfa
+0x2fb28c5e   478  e81deefeff     call 0x2fb17a80             ;; code: STUB, CEntryStub, minor: 1
+0x2fb28c63   483  f20f114003     movsd [eax+0x3],xmm0
+0x2fb28c68   488  8944241c       mov [esp+0x1c],eax
+0x2fb28c6c   492  61             popad
+0x2fb28c6d   493  e9adfeffff     jmp 159  (0x2fb28b1f)
+0x2fb28c72   498  90             nop
+0x2fb28c73   499  90             nop
+0x2fb28c74   500  90             nop
+0x2fb28c75   501  90             nop
+0x2fb28c76   502  90             nop
+0x2fb28c77   503  90             nop
+
+Deoptimization Input Data (deopt points = 6)
+ index  ast id    argc     pc             
+     0       3       0     29
+     1      46       0     -1
+     2      28       0    124
+     3      28       0     -1
+     4       3       0     -1
+     5      28       0     -1
+
+Safepoints (size = 48)
+0x2fb28a9d    29  01 (sp -> fp)       0
+0x2fb28afc   124  00 (sp -> fp)       2
+0x2fb28bbc   316  00 | edx (sp -> fp)  <none>
+0x2fb28c63   483  00 | eax (sp -> fp)  <none>
+
+RelocInfo (size = 39)
+0x2fb28a99  code target (STUB)  (0x2fb106c0)
+0x2fb28acd  global property cell
+0x2fb28ad3  embedded object  (0x3b341f75 <JS Function FactIf>)
+0x2fb28ad9  runtime entry  (deoptimization bailout 1)
+0x2fb28aed  embedded object  (0x3b341f75 <JS Function FactIf>)
+0x2fb28af7  position  (58)
+0x2fb28af8  code target (OPTIMIZED_FUNCTION)  (0x2fb28a80)
+0x2fb28b11  runtime entry  (deoptimization bailout 3)
+0x2fb28b28  embedded object  (0x3a208121 <Map(elements=1)>)
+0x2fb28b2e  runtime entry  (deoptimization bailout 4)
+0x2fb28b45  runtime entry  (deoptimization bailout 4)
+0x2fb28b4b  runtime entry  (deoptimization bailout 4)
+0x2fb28b60  runtime entry  (deoptimization bailout 4)
+0x2fb28b9f  embedded object  (0x3a208121 <Map(elements=1)>)
+0x2fb28bb8  code target (STUB)  (0x2fb17a80)
+0x2fb28bd0  embedded object  (0x3a208121 <Map(elements=1)>)
+0x2fb28bd6  runtime entry  (deoptimization bailout 5)
+0x2fb28bed  runtime entry  (deoptimization bailout 5)
+0x2fb28bf3  runtime entry  (deoptimization bailout 5)
+0x2fb28c08  runtime entry  (deoptimization bailout 5)
+0x2fb28c46  embedded object  (0x3a208121 <Map(elements=1)>)
+0x2fb28c5f  code target (STUB)  (0x2fb17a80)
+

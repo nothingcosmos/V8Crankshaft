@@ -92,5 +92,50 @@ type-inferenceは、型付けを確定させて、冗長な型チェックを除
 phiがあるloop headerでiterationする
 
 
+Rope / code
+-------------------------------------------------------------------------------
+
+アルゴリズム
+
+メリット
+
+文字列の結合が速い
+
+部分文字列が速い substring
+
+文字列のコピーが速い
+
+葉が文字列、ノードがConcatという名前の二分木
+
+一度作った葉ノードの書き換えは行わない
+
+共有しまくるデータ構造であるため、省メモリ
+
+substr, concatがO(log N)
+
+
+
+StringAddStub
+
+first second
+eax   edx  <-- string
+ebx   ecx  <-- string size
+
+
+
+
+
+JVMも、stubGeneraterが同じ役割を行っているように見える
+
+JVMも似たようなconjoion copyなるものが存在するため、
+V8とJVMは等速になるのかなっていうイメージがあるが、そうではないのか？
+
+immutableの差とか、アルゴリズムの差なのか？
+
+
+JVMはStringAddみたいな中間表現が存在しないはずで、
+StringAddをさらに細かいIdealに
+
+
 
 

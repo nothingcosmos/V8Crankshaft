@@ -80,12 +80,12 @@ loop-invariant-code motionとは、
 
 Linear-scan register allocationとは、
 --------------------------------------------------------------------------------
-  レジスタ割り付け用のアルゴリズムで、非常に高速に動作します。
+  レジスタ割り付け用のアルゴリズムで、非常に高速に動作し、そこそこなコードを生成します。
 
   伝統的なコンパイラは、グラフ色彩のアルゴリズムを採用していますが、
   非常に時間がかかるアルゴリズムであるため、JITコンパイラではLinear-Scanが採用されることが多いです。
 
-  実装例を挙げると、LLVMとJVM HotSpot C1です。
+  Linear-scanの実装例を挙げると、LLVMとJVM HotSpot C1です。
 
 
 Deoptimizationとは、
@@ -106,7 +106,7 @@ type infomation correctとは、
   JVM HotSpotでは、インタプリタ実行時にcast先の型や、instanceofの型や、invokevirtualした関数などを
   プロファイル情報として取得し、JITコンパイル時に活用します。
 
-  さらにCrankshaftは型推論するとかなんとかいう噂を効くため、プロファイル情報で型情報を取得しつつ、
+  さらにCrankshaftは型推論するとかなんとかいう噂を聞くため、プロファイル情報で型情報を取得しつつ、
   型推論との組み合わせで高速なコードを生成するのだと思います。
 
 
@@ -344,7 +344,7 @@ Crankshaftの内部
 Crankshaftの入り口は、MakeCrankshaftCode() ::
 
   Handle<Context> global_context(info->closure()->context()->global_context());
-  TypeFeedbackOracle oracle(code, global_context, info->isolate());    <-- 型推論っぽい
+  TypeFeedbackOracle oracle(code, global_context, info->isolate());    <-- Hydrogenの型情報や推論結果をASTへフィードバックする？
   HGraphBuilder builder(info, &oracle);
   HPhase phase(HPhase::kTotal);
   HGraph* graph = builder.CreateGraph();                               <-- high-level
@@ -414,8 +414,8 @@ Hydrogenの大まかな流れ ::
   graph()->InsertRepresentationChanges();
 
 
-  graph()->InitializeInferredTypes();
-  graph()->Canonicalize();
+  graph()->InitializeInferredTypes();       <-- 型推論
+  graph()->Canonicalize();                  <-- 確定した型情報を参照し、冗長な型チェックを除去する
 
   HGlobalValueNumberer gvn()       <-- GVN
   gvn.Analyze()
