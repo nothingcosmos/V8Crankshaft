@@ -76,6 +76,50 @@ shell
 </div>
 </div>
 </div>
+<div class="section" id="id2">
+<h1>疑問点<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
+<p>V8の生成するx86コードは、なぜintegerを2倍にして扱っているのだろうか。return 1は 0x2だし、3は0x6だし、print(5)すら、push 0x5してるんだけど。</p>
+<p>-&gt; 最下位1bitは、smi(smallinteger)か、heappointerかの判定で使用しているため.</p>
+<p>typeFeedbackOracleで型情報をASTにフィードバックしたとして、
+その型情報を何に使うんだろ</p>
+<p>inline展開されたコードがCrankshaftでrecompileされた再に役立つのか？</p>
+<p>それともフィードバック機能はおまけで、型推論的なことをやることが目的なのか？</p>
+<p>runtime type correctが見つからない</p>
+<p>int32かdoubleへ変換され、box化が解除されること</p>
+<dl class="docutils">
+<dt>first pass</dt>
+<dd>phiをたどる。phiのoperandがi32であるかどうか。phiの使用でi32へ変換されているかどうかをみる
+i32への変換可能性をみる</dd>
+<dt>second pass</dt>
+<dd>phiに、悲観的に変換できないものとして、マークをつけていく</dd>
+<dt>third pass</dt>
+<dd>phi math-abs binary bitwise arith operation
+タグづけ処理
+i32はタグなし</dd>
+</dl>
+<p>type inference is forward control-flow propagation algorithm</p>
+<p>type-inferenceは、型付けを確定させて、冗長な型チェックを除去する</p>
+<p>phiがあるloop headerでiterationする</p>
+<p>アルゴリズム</p>
+<p>メリット</p>
+<p>文字列の結合が速い</p>
+<p>部分文字列が速い substring</p>
+<p>文字列のコピーが速い</p>
+<p>葉が文字列、ノードがConcatという名前の二分木</p>
+<p>一度作った葉ノードの書き換えは行わない</p>
+<p>共有しまくるデータ構造であるため、省メモリ</p>
+<p>substr, concatがO(log N)</p>
+<p>StringAddStub</p>
+<p>first second
+eax   edx  &lt;&#8211; string
+ebx   ecx  &lt;&#8211; string size</p>
+<p>JVMも、stubGeneraterが同じ役割を行っているように見える</p>
+<p>JVMも似たようなconjoion copyなるものが存在するため、
+V8とJVMは等速になるのかなっていうイメージがあるが、そうではないのか？</p>
+<p>immutableの差とか、アルゴリズムの差なのか？</p>
+<p>JVMはStringAddみたいな中間表現が存在しないはずで、
+StringAddをさらに細かいIdealに</p>
+</div>
 
 
       </div>

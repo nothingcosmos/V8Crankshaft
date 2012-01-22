@@ -28,6 +28,7 @@
     <script type="text/javascript" src="../static/doctools.js"></script>
     <script type="text/javascript" src="../_static/theme_extras.js"></script>
     <link rel="top" title="V8 Crankshaft Overview 1.3 documentation" href="../index.html" />
+    <link rel="next" title="Crankshaft optimize" href="optimize.html" />
     <link rel="prev" title="Welcome to V8 Crankshaft Internals’s documentation!" href="../index.html" /> 
   </head>
   <body>
@@ -41,6 +42,8 @@
         «&#160;&#160;<a href="../index.html">Welcome to V8 Crankshaft Internals&#8217;s documentation!</a>
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="optimize.html">Crankshaft optimize</a>&#160;&#160;»
         </p>
 
       </div>
@@ -111,10 +114,10 @@ V8ベンチマークで50%性能向上したようです。</p>
 <div class="section" id="linear-scan-register-allocation">
 <h3>Linear-scan register allocationとは、<a class="headerlink" href="#linear-scan-register-allocation" title="Permalink to this headline">¶</a></h3>
 <blockquote>
-<div><p>レジスタ割り付け用のアルゴリズムで、非常に高速に動作します。</p>
+<div><p>レジスタ割り付け用のアルゴリズムで、非常に高速に動作し、そこそこなコードを生成します。</p>
 <p>伝統的なコンパイラは、グラフ色彩のアルゴリズムを採用していますが、
 非常に時間がかかるアルゴリズムであるため、JITコンパイラではLinear-Scanが採用されることが多いです。</p>
-<p>実装例を挙げると、LLVMとJVM HotSpot C1です。</p>
+<p>Linear-scanの実装例を挙げると、LLVMとJVM HotSpot C1です。</p>
 </div></blockquote>
 </div>
 <div class="section" id="deoptimization">
@@ -132,7 +135,7 @@ V8ベンチマークで50%性能向上したようです。</p>
 <div><p>型情報をランタイムプロファイラが取得することなのだと思います。</p>
 <p>JVM HotSpotでは、インタプリタ実行時にcast先の型や、instanceofの型や、invokevirtualした関数などを
 プロファイル情報として取得し、JITコンパイル時に活用します。</p>
-<p>さらにCrankshaftは型推論するとかなんとかいう噂を効くため、プロファイル情報で型情報を取得しつつ、
+<p>さらにCrankshaftは型推論するとかなんとかいう噂を聞くため、プロファイル情報で型情報を取得しつつ、
 型推論との組み合わせで高速なコードを生成するのだと思います。</p>
 </div></blockquote>
 </div>
@@ -240,7 +243,8 @@ function Bench() {
   }
 }
 
-Bench();</pre>
+Bench();
+</pre>
 </div>
 </div>
 <div class="section" id="id7">
@@ -339,7 +343,7 @@ Breakpoint 1, v8::internal::MakeCrankshaftCode (info=0xbfffe5c8) at src/compiler
 <h2>Crankshaftの内部<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
 <p>Crankshaftの入り口は、MakeCrankshaftCode()</p>
 <div class="highlight-python"><pre>Handle&lt;Context&gt; global_context(info-&gt;closure()-&gt;context()-&gt;global_context());
-TypeFeedbackOracle oracle(code, global_context, info-&gt;isolate());    &lt;-- 型推論っぽい
+TypeFeedbackOracle oracle(code, global_context, info-&gt;isolate());    &lt;-- Hydrogenの型情報や推論結果をASTへフィードバックする
 HGraphBuilder builder(info, &amp;oracle);
 HPhase phase(HPhase::kTotal);
 HGraph* graph = builder.CreateGraph();                               &lt;-- high-level
@@ -389,15 +393,14 @@ graph()-&gt;EliminateRedundantPhis();
 graph()-&gt;EliminateUnreachablePhis();
 graph()-&gt;CollectPhis();
 
-HInferRepresentation rep(graph());
+HInferRepresentation rep(graph());        &lt;-- 型情報を使ってboxing unboxingの削除
 rep.Analyze()
 
 graph()-&gt;MarkDeoptimizeOnUndefined();
 graph()-&gt;InsertRepresentationChanges();
 
-
-graph()-&gt;InitializeInferredTypes();
-graph()-&gt;Canonicalize();
+graph()-&gt;InitializeInferredTypes();       &lt;-- 型推論
+graph()-&gt;Canonicalize();                  &lt;-- 確定した型情報を参照し、冗長な型チェックを除去する
 
 HGlobalValueNumberer gvn()       &lt;-- GVN
 gvn.Analyze()
@@ -437,7 +440,6 @@ CodeGenerator::PrintCode(code, info);</pre>
 </div>
 <div class="section" id="ast-image">
 <h2>AST Image<a class="headerlink" href="#ast-image" title="Permalink to this headline">¶</a></h2>
-<p>FactIf AST</p>
 <div class="highlight-python"><pre>*** Generate code for user-defined function: 0x53717ff5 &lt;String[6]: FactIf&gt; ***
 --- AST ---
 FUNC
@@ -469,7 +471,9 @@ FUNC
 . . . . VAR PROXY local[0] (mode = VAR) "p"
 . . . . LITERAL 1
 . RETURN
-. . VAR PROXY local[0] (mode = VAR) "p"</pre>
+. . VAR PROXY local[0] (mode = VAR) "p"
+
+</pre>
 </div>
 </div>
 <div class="section" id="hydrogen-image">
@@ -558,8 +562,12 @@ B6 [shape=box, label=&quot;B6:\l 124 label () (v0(0) = [ecx|R];) () ()  &lt;|&#6
 </div>
 <div class="section" id="crankshaft-generate-code">
 <h2>Crankshaft generate code<a class="headerlink" href="#crankshaft-generate-code" title="Permalink to this headline">¶</a></h2>
-<p>入力ソース</p>
-<div class="highlight-python"><pre>--- Raw source ---
+<p>full-codegenが生成したコードと、Crankshaftが生成したコードを示します。</p>
+<p>最初がfull-codegenが生成したコードで、MUL SUB IFなども全てICになっています。</p>
+<p>Crankshaftが生成したコードは、smi(Small Integer)かどうかのチェック(ガード)を随所に挿入し、</p>
+<p>高速なコードを生成しています。</p>
+<div class="highlight-python"><pre>
+--- Raw source ---
 (n) {
   var p;
   if (n &gt; 1) {
@@ -568,10 +576,136 @@ B6 [shape=box, label=&quot;B6:\l 124 label () (v0(0) = [ecx|R];) () ()  &lt;|&#6
     p = 1;
   }
   return p;
-}</pre>
-</div>
-<p>x86 generated code</p>
-<div class="highlight-python"><pre>--- Optimized code ---
+}
+
+
+--- Code ---
+kind = FUNCTION
+name = FactIf
+Instructions (size = 144)
+0x29026660     0  55             push ebp
+0x29026661     1  89e5           mov ebp,esp
+0x29026663     3  56             push esi
+0x29026664     4  57             push edi
+0x29026665     5  6891809046     push 0x46908091             ;; object: 0x46908091 &lt;undefined&gt;
+0x2902666a    10  3b258c182109   cmp esp,[0x921188c]
+0x29026670    16  7305           jnc 23  (0x29026677)
+0x29026672    18  e849a0feff     call 0x290106c0             ;; debug: statement 15
+                                                             ;; code: STUB, StackCheckStub, minor: 0
+0x29026677    23  ff7508         push [ebp+0x8]
+0x2902667a    26  b802000000     mov eax,0x2                 &lt;-- (n &gt; 1)の1を表現するはず  下位1bitはsmiかheapかの判定で使うらしい
+0x2902667f    31  5a             pop edx
+0x29026680    32  e83be6feff     call 0x29014cc0             ;; debug: statement 32   &lt;-- たぶんcmp命令
+                                                             ;; debug: position 38
+                                                             ;; code: COMPARE_IC, UNINITIALIZED (id = 12)  &lt;-- CompareIC
+0x29026685    37  90             nop
+0x29026686    38  eb10           jmp 56  (0x29026698)
+0x29026688    40  3da1809046     cmp eax, 0x469080a1         ;; object: 0x469080a1 &lt;true&gt;
+0x2902668d    45  0f840d000000   jz 64  (0x290266a0)
+0x29026693    51  e93a000000     jmp 114  (0x290266d2)       &lt;-- goto false block
+0x29026698    56  85c0           test eax,eax
+0x2902669a    58  0f8e32000000   jng 114  (0x290266d2)       &lt;-- goto false block
+0x290266a0    64  ff7508         push [ebp+0x8]              &lt;-- start true block
+0x290266a3    67  ff7613         push [esi+0x13]
+0x290266a6    70  ff7508         push [ebp+0x8]
+0x290266a9    73  b802000000     mov eax,0x2                 &lt;-- 1を表現するはず
+0x290266ae    78  5a             pop edx
+0x290266af    79  e80cdbfeff     call 0x290141c0             ;; debug: statement 49   &lt;-- n-1を表現するはず
+                                                             ;; debug: position 66
+                                                             ;; code: BINARY_OP_IC, UNINITIALIZED (id = 26)
+0x290266b4    84  90             nop
+0x290266b5    85  50             push eax
+0x290266b6    86  b9e9876129     mov ecx,0x296187e9          ;; object: 0x296187e9 &lt;String[6]: FactIf&gt;
+0x290266bb    91  e8e0fffeff     call 0x290166a0             ;; debug: statement 49  &lt;-- call FactIf
+                                                             ;; debug: position 57
+                                                             ;; code: contextual, CALL_IC, UNINITIALIZED, argc = 1
+0x290266c0    96  8b75fc         mov esi,[ebp+0xfc]
+0x290266c3    99  5a             pop edx
+0x290266c4   100  e8b7d1ffff     call 0x29023880             ;; debug: position 55         &lt;-- n * を表現するはず
+                                                             ;; code: BINARY_OP_IC, UNINITIALIZED (id = 31)
+0x290266c9   105  90             nop
+0x290266ca   106  8945f4         mov [ebp+0xf4],eax
+0x290266cd   109  e908000000     jmp 122  (0x290266da)       &lt;-- goto join block
+0x290266d2   114  b802000000     mov eax,0x2                 &lt;-- start false block
+0x290266d7   119  8945f4         mov [ebp+0xf4],eax
+0x290266da   122  8b45f4         mov eax,[ebp+0xf4]          &lt;-- start join block
+0x290266dd   125  89ec           mov esp,ebp                 ;; debug: statement 100
+                                                             ;; debug: position 110
+                                                             ;; js return
+0x290266df   127  5d             pop ebp
+0x290266e0   128  c20800         ret 0x8
+0x290266e3   131  b891809046     mov eax,0x46908091          ;; object: 0x46908091 &lt;undefined&gt;
+0x290266e8   136  ebf3           jmp 125  (0x290266dd)
+0x290266ea   138  66             nop
+0x290266eb   139  90             nop
+
+Deoptimization Output Data (deopt points = 27)
+ast id        pc  state
+     2        10  NO_REGISTERS
+     3        10  NO_REGISTERS
+     4        23  NO_REGISTERS
+     5        23  NO_REGISTERS
+     8        26  NO_REGISTERS
+    10        31  TOS_REG
+    12        40  TOS_REG
+    46        64  NO_REGISTERS
+    14        64  NO_REGISTERS
+    18        67  NO_REGISTERS
+    22        73  NO_REGISTERS
+    24        78  TOS_REG
+    26        86  NO_REGISTERS
+    30        96  TOS_REG
+    28        99  TOS_REG
+    31       106  TOS_REG
+    35       109  TOS_REG
+    33       109  NO_REGISTERS
+    15       109  NO_REGISTERS
+    47       114  NO_REGISTERS
+    36       114  NO_REGISTERS
+    40       119  TOS_REG
+    44       122  TOS_REG
+    42       122  NO_REGISTERS
+    37       122  NO_REGISTERS
+    45       122  NO_REGISTERS
+    48       125  TOS_REG
+
+Stack checks (size = 0)
+ast_id  pc_offset
+
+RelocInfo (size = 40)
+0x29026666  embedded object  (0x46908091 &lt;undefined&gt;)
+0x29026672  statement position  (15)
+0x29026673  code target (STUB)  (0x290106c0)
+0x29026680  statement position  (32)
+0x29026680  position  (38)
+0x29026681  code target with id (COMPARE_IC)  (0x29014cc0) (id=12)
+0x29026689  embedded object  (0x469080a1 &lt;true&gt;)
+0x290266af  statement position  (49)
+0x290266af  position  (66)
+0x290266b0  code target with id (BINARY_OP_IC)  (0x290141c0) (id=26)
+0x290266b7  embedded object  (0x296187e9 &lt;String[6]: FactIf&gt;)
+0x290266bb  statement position  (49)
+0x290266bb  position  (57)
+0x290266bc  code target (context) (CALL_IC)  (0x290166a0)
+0x290266c4  position  (55)
+0x290266c5  code target with id (BINARY_OP_IC)  (0x29023880) (id=31)
+0x290266dd  statement position  (100)
+0x290266dd  position  (110)
+0x290266dd  js return
+0x290266e4  embedded object  (0x46908091 &lt;undefined&gt;)
+
+--- Raw source ---
+(n) {
+  var p;
+  if (n &gt; 1) {
+    p = n * FactIf(n - 1);
+  } else {
+    p = 1;
+  }
+  return p;
+}
+
+--- Optimized code ---
 kind = OPTIMIZED_FUNCTION
 name = FactIf
 stack_slots = 1
@@ -587,46 +721,46 @@ Instructions (size = 512)
 0x29027a10    16  3b258c182109   cmp esp,[0x921188c]
 0x29027a16    22  7305           jnc 29  (0x29027a1d)
 0x29027a18    24  e8a38cfeff     call 0x290106c0             ;; code: STUB, StackCheckStub, minor: 0
-0x29027a1d    29  8b4508         mov eax,[ebp+0x8]
-0x29027a20    32  a801           test al,0x1
-0x29027a22    34  0f85f4000000   jnz 284  (0x29027b1c)
-0x29027a28    40  d1f8           sar eax,1
-0x29027a2a    42  83f801         cmp eax,0x1                 &lt;-- if (n&gt;1) goto 61
-0x29027a2d    45  0f8f0a000000   jg 61  (0x29027a3d)
-0x29027a33    51  b902000000     mov ecx,0x2
-0x29027a38    56  e9d7000000     jmp 276  (0x29027b14)       &lt;-- if !(n&gt;1) goto 276
-0x29027a3d    61  8b4df4         mov ecx,[ebp+0xf4]          &lt;-- // 以降が p = n * FactIf(n-1);に該当する
+0x29027a1d    29  8b4508         mov eax,[ebp+0x8]           &lt;-- 引数n
+0x29027a20    32  a801           test al,0x1                 &lt;-- nの最下位ビットのチェック
+0x29027a22    34  0f85f4000000   jnz 284  (0x29027b1c)       &lt;-- 1がたっているheap objectの場合はgoto 284へ つまりnがsmiであることのguard
+0x29027a28    40  d1f8           sar eax,1                   &lt;-- 最下位1bitのsmi/heapフラグをshift rightで潰す
+0x29027a2a    42  83f801         cmp eax,0x1                 &lt;-- if (n&gt;1)
+0x29027a2d    45  0f8f0a000000   jg 61  (0x29027a3d)         &lt;-- then goto 61
+0x29027a33    51  b902000000     mov ecx,0x2                 &lt;-- n = 1 //
+0x29027a38    56  e9d7000000     jmp 276  (0x29027b14)       &lt;-- else goto 276
+0x29027a3d    61  8b4df4         mov ecx,[ebp+0xf4]          &lt;-- // 以降が p = n * FactIf(n-1)
 0x29027a40    64  8b4913         mov ecx,[ecx+0x13]
-0x29027a43    67  83e801         sub eax,0x1                 &lt;-- eax = n - 1
+0x29027a43    67  83e801         sub eax,0x1                 &lt;-- n-1
 0x29027a46    70  8b15d490e023   mov edx,[0x23e090d4]        ;; global property cell  // 呼び出すproperty callのチェック
-0x29027a4c    76  81fad11b9446   cmp edx,0x46941bd1          ;; object: 0x46941bd1 &lt;JS Function FactIf&gt; &lt;--想定するFactIf
-0x29027a52    82  0f853206de20   jnz 0x49e0808a              ;; deoptimization bailout 1 //想定するcallでない場合、bailout
-0x29027a58    88  8b4913         mov ecx,[ecx+0x13]          &lt;-- 隠れ引数。thisポインタでも設定してるんでしょうかね？
-0x29027a5b    91  fff1           push ecx
+0x29027a4c    76  81fad11b9446   cmp edx,0x46941bd1          ;; object: 0x46941bd1 &lt;JS Function FactIf&gt; &lt;-- 想定するFactIf
+0x29027a52    82  0f853206de20   jnz 0x49e0808a              ;; deoptimization bailout 1 // 想定するFactIfでない場合、bailout
+0x29027a58    88  8b4913         mov ecx,[ecx+0x13]
+0x29027a5b    91  fff1           push ecx                    &lt;-- 恐らくthis pointer みたいなもの
 0x29027a5d    93  03c0           add eax,eax
-0x29027a5f    95  0f80e6000000   jo 331  (0x29027b4b)        &lt;-- まさかのオーバーフローチェック。
-0x29027a65   101  fff0           push eax                    &lt;-- argument set n
-0x29027a67   103  bfd11b9446     mov edi,0x46941bd1          ;; object: 0x46941bd1 &lt;JS Function FactIf&gt; &lt;--想定するFactIf
+0x29027a5f    95  0f80e6000000   jo 331  (0x29027b4b)
+0x29027a65   101  fff0           push eax
+0x29027a67   103  bfd11b9446     mov edi,0x46941bd1          ;; object: 0x46941bd1 &lt;JS Function FactIf&gt;
 0x29027a6c   108  8b75fc         mov esi,[ebp+0xfc]
 0x29027a6f   111  c6c102         mov_b cl,0x2
-0x29027a72   114  e889ffffff     call 0  (0x29027a00)        ;; debug: position 57
-                                                             ;; code: OPTIMIZED_FUNCTION &lt;-- たぶんここがFactIf()
-0x29027a77   119  8b4d08         mov ecx,[ebp+0x8]
-0x29027a7a   122  f6c101         test_b cl,0x1
-0x29027a7d   125  7426           jz 165  (0x29027aa5)
-0x29027a7f   127  8179ff2181b040 cmp [ecx+0xff],0x40b08121    ;; object: 0x40b08121 &lt;Map(elements=1)&gt;
+0x29027a72   114  e889ffffff     call 0  (0x29027a00)        ;; debug: position 57  &lt;-- call FactIf 再帰呼び出し
+                                                             ;; code: OPTIMIZED_FUNCTION
+0x29027a77   119  8b4d08         mov ecx,[ebp+0x8]           &lt;-- 返り値のチェック、 
+0x29027a7a   122  f6c101         test_b cl,0x1               &lt;-- heap objectだったら
+0x29027a7d   125  7426           jz 165  (0x29027aa5)        &lt;-- smiだったらgoto 165
+0x29027a7f   127  8179ff2181b040 cmp [ecx+0xff],0x40b08121    ;; object: 0x40b08121 &lt;Map(elements=1)&gt; &lt;-- heap objectのケース
 0x29027a86   134  7416           jz 158  (0x29027a9e)
 0x29027a88   136  81f991809046   cmp ecx,0x46908091          ;; object: 0x46908091 &lt;undefined&gt;
 0x29027a8e   142  0f850a06de20   jnz 0x49e0809e              ;; deoptimization bailout 3
 0x29027a94   148  f20f100d103d4608 movsd xmm1,[0x8463d10]
 0x29027a9c   156  eb0f           jmp 173  (0x29027aad)
-0x29027a9e   158  f20f104903     movsd xmm1,[ecx+0x3]        &lt;-- load n
+0x29027a9e   158  f20f104903     movsd xmm1,[ecx+0x3]
 0x29027aa3   163  eb08           jmp 173  (0x29027aad)
-0x29027aa5   165  d1f9           sar ecx,1
+0x29027aa5   165  d1f9           sar ecx,1                   &lt;-- FactIfの返値がsmiのケース、返値ecxの下位ビット削り
 0x29027aa7   167  f20f2ac9       cvtsi2sd xmm1,ecx
-0x29027aab   171  03c9           add ecx,ecx
-0x29027aad   173  a801           test al,0x1
-0x29027aaf   175  7425           jz 214  (0x29027ad6)
+0x29027aab   171  03c9           add ecx,ecx                 &lt;-- 返値のsmiのオーバーフローチェック
+0x29027aad   173  a801           test al,0x1                 &lt;-- n * の、nのsmiチェック
+0x29027aaf   175  7425           jz 214  (0x29027ad6)        &lt;-- smiの場合は、goto 214
 0x29027ab1   177  8178ff2181b040 cmp [eax+0xff],0x40b08121    ;; object: 0x40b08121 &lt;Map(elements=1)&gt;
 0x29027ab8   184  7415           jz 207  (0x29027acf)
 0x29027aba   186  3d91809046     cmp eax, 0x46908091         ;; object: 0x46908091 &lt;undefined&gt;
@@ -635,10 +769,10 @@ Instructions (size = 512)
 0x29027acd   205  eb0f           jmp 222  (0x29027ade)
 0x29027acf   207  f20f105003     movsd xmm2,[eax+0x3]
 0x29027ad4   212  eb08           jmp 222  (0x29027ade)
-0x29027ad6   214  d1f8           sar eax,1
+0x29027ad6   214  d1f8           sar eax,1                   &lt;-- 下位ビット削り
 0x29027ad8   216  f20f2ad0       cvtsi2sd xmm2,eax
 0x29027adc   220  03c0           add eax,eax
-0x29027ade   222  f20f59ca       mulsd xmm1,xmm2             &lt;-- n * FactIf(n-1);
+0x29027ade   222  f20f59ca       mulsd xmm1,xmm2             &lt;-- n * FactIf()
 0x29027ae2   226  8b0d94122109   mov ecx,[0x9211294]
 0x29027ae8   232  89c8           mov eax,ecx
 0x29027aea   234  83c00c         add eax,0xc
@@ -648,12 +782,12 @@ Instructions (size = 512)
 0x29027aff   255  890594122109   mov [0x9211294],eax
 0x29027b05   261  83c101         add ecx,0x1
 0x29027b08   264  c741ff2181b040 mov [ecx+0xff],0x40b08121    ;; object: 0x40b08121 &lt;Map(elements=1)&gt;
-0x29027b0f   271  f20f114903     movsd [ecx+0x3],xmm1
-0x29027b14   276  89c8           mov eax,ecx                 &lt;-- if (n&lt;=0)の場合はここに飛んでくる ecx = 0x2
+0x29027b0f   271  f20f114903     movsd [ecx+0x3],xmm1         &lt;-- 返値格納
+0x29027b14   276  89c8           mov eax,ecx                  &lt;-- if (! n &gt; 1) ecx = 0x2
 0x29027b16   278  89ec           mov esp,ebp
 0x29027b18   280  5d             pop ebp
-0x29027b19   281  c20800         ret 0x8                     &lt;-- return p
-0x29027b1c   284  8178ff2181b040 cmp [eax+0xff],0x40b08121    ;; object: 0x40b08121 &lt;Map(elements=1)&gt;
+0x29027b19   281  c20800         ret 0x8                      &lt;-- FactIfの終了
+0x29027b1c   284  8178ff2181b040 cmp [eax+0xff],0x40b08121    ;; object: 0x40b08121 &lt;Map(elements=1)&gt; &lt;-- nのguard nがheap objectのケース
 0x29027b23   291  0f858905de20   jnz 0x49e080b2              ;; deoptimization bailout 5
 0x29027b29   297  f20f104003     movsd xmm0,[eax+0x3]
 0x29027b2e   302  f20f2cc0       cvttsd2si eax,xmm0
@@ -662,7 +796,7 @@ Instructions (size = 512)
 0x29027b3a   314  0f857205de20   jnz 0x49e080b2              ;; deoptimization bailout 5
 0x29027b40   320  0f8a6c05de20   jpe 0x49e080b2              ;; deoptimization bailout 5
 0x29027b46   326  e9dffeffff     jmp 42  (0x29027a2a)
-0x29027b4b   331  60             pushad                      &lt;-- overflowした場合はここに飛んでくる
+0x29027b4b   331  60             pushad
 0x29027b4c   332  d1f8           sar eax,1
 0x29027b4e   334  3500000080     xor eax, 0x80000000
 0x29027b53   339  f20f2ac0       cvtsi2sd xmm0,eax
@@ -702,7 +836,7 @@ Instructions (size = 512)
 0x29027bcd   461  0f1f00         nop
 
 Deoptimization Input Data (deopt points = 6)
- index  ast id    argc     pc
+ index  ast id    argc     pc             
      0       3       0     29
      1      46       0     -1
      2      28       0    119
@@ -714,7 +848,32 @@ Safepoints (size = 48)
 0x29027a1d    29  1 (sp -&gt; fp)       0
 0x29027a77   119  0 (sp -&gt; fp)       2
 0x29027b9d   413  0 | eax (sp -&gt; fp)  &lt;none&gt;
-0x29027bbe   446  0 (sp -&gt; fp)  &lt;none&gt;</pre>
+0x29027bbe   446  0 (sp -&gt; fp)  &lt;none&gt;
+
+RelocInfo (size = 36)
+0x29027a19  code target (STUB)  (0x290106c0)
+0x29027a48  global property cell
+0x29027a4e  embedded object  (0x46941bd1 &lt;JS Function FactIf&gt;)
+0x29027a54  runtime entry  (deoptimization bailout 1)
+0x29027a68  embedded object  (0x46941bd1 &lt;JS Function FactIf&gt;)
+0x29027a72  position  (57)
+0x29027a73  code target (OPTIMIZED_FUNCTION)  (0x29027a00)
+0x29027a82  embedded object  (0x40b08121 &lt;Map(elements=1)&gt;)
+0x29027a8a  embedded object  (0x46908091 &lt;undefined&gt;)
+0x29027a90  runtime entry  (deoptimization bailout 3)
+0x29027ab4  embedded object  (0x40b08121 &lt;Map(elements=1)&gt;)
+0x29027abb  embedded object  (0x46908091 &lt;undefined&gt;)
+0x29027ac1  runtime entry  (deoptimization bailout 4)
+0x29027b0b  embedded object  (0x40b08121 &lt;Map(elements=1)&gt;)
+0x29027b1f  embedded object  (0x40b08121 &lt;Map(elements=1)&gt;)
+0x29027b25  runtime entry  (deoptimization bailout 5)
+0x29027b3c  runtime entry  (deoptimization bailout 5)
+0x29027b42  runtime entry  (deoptimization bailout 5)
+0x29027b80  embedded object  (0x40b08121 &lt;Map(elements=1)&gt;)
+0x29027b99  code target (STUB)  (0x290189a0)
+0x29027bba  code target (STUB)  (0x290189a0)
+
+</pre>
 </div>
 </div>
 <div class="section" id="id11">
@@ -762,6 +921,8 @@ Safepoints (size = 48)
         «&#160;&#160;<a href="../index.html">Welcome to V8 Crankshaft Internals&#8217;s documentation!</a>
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="optimize.html">Crankshaft optimize</a>&#160;&#160;»
         </p>
 
       </div>

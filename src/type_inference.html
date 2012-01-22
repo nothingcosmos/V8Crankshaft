@@ -27,7 +27,9 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <script type="text/javascript" src="../_static/theme_extras.js"></script>
-    <link rel="top" title="V8 Crankshaft Overview 1.3 documentation" href="../index.html" /> 
+    <link rel="top" title="V8 Crankshaft Overview 1.3 documentation" href="../index.html" />
+    <link rel="next" title="c_image" href="c_image.html" />
+    <link rel="prev" title="Crankshaft optimize" href="optimize.html" /> 
   </head>
   <body>
       <div class="header"><h1 class="heading"><a href="../index.html">
@@ -37,7 +39,11 @@
       <div class="topnav">
       
         <p>
+        «&#160;&#160;<a href="optimize.html">Crankshaft optimize</a>
+        &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="c_image.html">c_image</a>&#160;&#160;»
         </p>
 
       </div>
@@ -46,20 +52,253 @@
         
   <div class="section" id="type-inference">
 <h1>type inference<a class="headerlink" href="#type-inference" title="Permalink to this headline">¶</a></h1>
-<p>rubyの例)</p>
+<p>rubyの例を参考にjsのコードでテストしてみる</p>
 <ol class="arabic simple">
 <li>def  id(x) x end</li>
 <li>def fact(x) x == 0 ? 1 : x * fact(x – 1) end</li>
 <li>def  foo(x) x ? 1 : 1.0 end</li>
 <li>a= 1; p a; a= “a”; p a</li>
 <li>def harray a = [1, “A”]; a[1] end</li>
-<li>def itest(x) x.collect {<a href="#id1"><span class="problematic" id="id2">|e|</span></a> e.to_f}</li>
+<li>def itest(x) x.collect {<a href="#id3"><span class="problematic" id="id4">|e|</span></a> e.to_f}</li>
 </ol>
 <p>itest([1, 2, 3]</p>
-<p>jsの例)</p>
+<p>jsの例) ... commitしていなかったので、自宅に忘れてきた。</p>
+<blockquote>
+<div>...</div></blockquote>
+<div class="section" id="type-info">
+<h2>type-info<a class="headerlink" href="#type-info" title="Permalink to this headline">¶</a></h2>
+<p>型情報はこのファイルに記述されている</p>
+<p>type-info.h</p>
+<p>type-info.c</p>
+<div class="section" id="class-typeinfo">
+<h3>Class TypeInfo<a class="headerlink" href="#class-typeinfo" title="Permalink to this headline">¶</a></h3>
+<p>TypeInfoの構造</p>
+<div class="highlight-python"><pre>//         Unknown
+//           |   \____________
+//           |                |
+//      Primitive       Non-primitive
+//           |   \_______     |
+//           |           |    |
+//        Number       String |
+//         /   \         |    |
+//    Double  Integer32  |   /
+//        |      |      /   /
+//        |     Smi    /   /
+//        |      |    / __/
+//        Uninitialized.</pre>
+</div>
+</div>
+<div class="section" id="class-typefeedbackoracle">
+<h3>Class TypeFeedbackOracle<a class="headerlink" href="#class-typefeedbackoracle" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><p>基本的に辞書っぽいが、辞書への登録、参照用のメソッドを多数定義している。</p>
+<p>辞書のkeyは、ASTのNodeクラスか、unsigned ast_id</p>
+<p>ASTの全Nodeはid()を内包してる。</p>
+<p>内部では、GetInfo(expr-&gt;id())</p>
+</div></blockquote>
+</div>
+</div>
+</div>
+<div class="section" id="id1">
+<h1>Type-infoの活用方法<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="crankshaft">
+<h2>Crankshaftでの活用方法<a class="headerlink" href="#crankshaft" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id2">
+<h3>初期化<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>compiler.cc:</p>
+<div class="highlight-python"><pre>TypeFeedbackOracle oracle(code, global_context, info-&gt;isolate());
+HGraphBuilder builder(info, &amp;oracle);
+
+HGraphBuilder::HGraphBuilder(CompilationInfo* info,
+                           TypeFeedbackOracle* oracle)
+  initial_function_state_(this, info, oracle, false)    &lt;-- hydrogen.h::FunctionState oracle_に設定</pre>
+</div>
+<p>TypeFeedbackOracleを生成したのち、Hydrogenを生成するHGraphBuilderの第2引数で渡している。
+hydrogen中では、oracle_ もしくはoracle() で参照可能らしいので、参照箇所を探す。</p>
+</div>
+<div class="section" id="hydrogenoracle">
+<h3>hydrogenの中でoracleを参照してる箇所<a class="headerlink" href="#hydrogenoracle" title="Permalink to this headline">¶</a></h3>
+<p>oracleへの型情報のフィードバックは、hydrogenのgraphを生成する際に行う。</p>
+<p>code</p>
+<div class="highlight-python"><pre>void TestContext::BuildBranch(HValue* value) {
+...
+ToBooleanStub::Types expected(builder-&gt;oracle()-&gt;ToBooleanTypes(test_id));
+
+
+void HGraphBuilder::VisitSwitchStatement(SwitchStatement* stmt) {
+if (switch_type == SMI_SWITCH) {
+  clause-&gt;RecordTypeFeedback(oracle());
+}
+
+void HGraphBuilder::HandlePropertyAssignment(Assignment* expr) {
+expr-&gt;RecordTypeFeedback(oracle());
+
+
+void HGraphBuilder::VisitProperty(Property* expr) {
+expr-&gt;RecordTypeFeedback(oracle());
+
+
+bool HGraphBuilder::TryInline(Call* expr, bool drop_extra) {
+// ----------------------------------------------------------------
+// After this point, we've made a decision to inline this function (so
+// TryInline should always return true).
+
+// Save the pending call context and type feedback oracle. Set up new ones
+// for the inlined function.
+TypeFeedbackOracle target_oracle(
+  Handle&lt;Code&gt;(target_shared-&gt;code()),
+  Handle&lt;Context&gt;(target-&gt;context()-&gt;global_context()),
+  isolate());
+// The function state is new-allocated because we need to delete it
+// in two different places.
+FunctionState* target_state =
+  new FunctionState(this, &amp;target_info, &amp;target_oracle, drop_extra);
+
+void HGraphBuilder::VisitCall(Call* expr) {
+// Named function call.
+expr-&gt;RecordTypeFeedback(oracle(), CALL_AS_METHOD);
+
+expr-&gt;RecordTypeFeedback(oracle(), CALL_AS_FUNCTION);
+
+void HGraphBuilder::VisitSub(UnaryOperation* expr) {
+TypeInfo info = oracle()-&gt;UnaryType(expr);
+
+以降、UnaryOperationに同様の処理が続くので省略
+
+HInstruction* HGraphBuilder::BuildBinaryOperation(BinaryOperation* expr,
+                                                HValue* left,
+                                                HValue* right) {
+TypeInfo info = oracle()-&gt;BinaryType(expr);
+
+void HGraphBuilder::VisitCompareOperation(CompareOperation* expr) {
+TypeInfo type_info = oracle()-&gt;CompareType(expr);</pre>
+</div>
+</div>
+</div>
+<div class="section" id="astoracle">
+<h2>ASTでoracleを参照している箇所<a class="headerlink" href="#astoracle" title="Permalink to this headline">¶</a></h2>
+<p>ASTでもoracleの参照箇所はあり、上記のRecordTypeFeedback()からASTのNodeへfeedbackしているように見える</p>
+<p>RecordTypeFeedback()が用意されているASTのNode</p>
+<div class="highlight-python"><pre>class CaseClause : public ZoneObject
+class Property: public Expression
+class Call: public Expression          &lt;-- CallKind call_kind を追加で与える CALL_AS_METHOD|CALL_AS_FUNCTION
+class CountOperation: public Expression
+class CompareOperation: public Expression
+class Assignment: public Expression</pre>
+</div>
+<div class="section" id="class-caseclause-public-zoneobject">
+<h3>class CaseClause : public ZoneObject<a class="headerlink" href="#class-caseclause-public-zoneobject" title="Permalink to this headline">¶</a></h3>
+<p>void CaseClause::RecordTypeFeedback(TypeFeedbackOracle* oracle)</p>
+<div class="highlight-python"><pre>TypeInfo info = oracle-&gt;SwitchType(this);                             &lt;--
+if (info.IsSmi()) {
+  compare_type_ = SMI_ONLY;
+} else if (info.IsSymbol()) {
+  compare_type_ = SYMBOL_ONLY;
+} else if (info.IsNonSymbol()) {
+  compare_type_ = STRING_ONLY;
+} else if (info.IsNonPrimitive()) {
+  compare_type_ = OBJECT_ONLY;
+} else {
+  ASSERT(compare_type_ == NONE);
+}</pre>
+</div>
+</div>
+<div class="section" id="class-property-public-expression">
+<h3>class Property: public Expression<a class="headerlink" href="#class-property-public-expression" title="Permalink to this headline">¶</a></h3>
+<p>void Property::RecordTypeFeedback(TypeFeedbackOracle* oracle)</p>
+<div class="highlight-python"><pre>...
+is_monomorphic_ = oracle-&gt;LoadIsMonomorphicNormal(this);             &lt;--
+...
+} else if (is_monomorphic_) {
+  receiver_types_.Add(oracle-&gt;LoadMonomorphicReceiverType(this));    &lt;--
+} else if (oracle-&gt;LoadIsMegamorphicWithTypeInfo(this)) {            &lt;--
+  receiver_types_.Reserve(kMaxKeyedPolymorphism);
+  oracle-&gt;CollectKeyedReceiverTypes(this-&gt;id(), &amp;receiver_types_);   &lt;--
+}</pre>
+</div>
+</div>
+<div class="section" id="class-call-public-expression-callkind-call-kind-call-as-method-call-as-function">
+<h3>class Call: public Expression          &lt;&#8211; CallKind call_kind を追加で与える CALL_AS_METHOD|CALL_AS_FUNCTION<a class="headerlink" href="#class-call-public-expression-callkind-call-kind-call-as-method-call-as-function" title="Permalink to this headline">¶</a></h3>
+<p>void Call::RecordTypeFeedback(TypeFeedbackOracle* oracle, CallKind call_kind)</p>
+<div class="highlight-python"><pre>is_monomorphic_ = oracle-&gt;CallIsMonomorphic(this);                    &lt;--
+Property* property = expression()-&gt;AsProperty();
+if (property == NULL) {
+  // Function call.  Specialize for monomorphic calls.
+  if (is_monomorphic_) target_ = oracle-&gt;GetCallTarget(this);         &lt;--
+} else {
+  Handle&lt;String&gt; name = Handle&lt;String&gt;::cast(key-&gt;handle());
+  oracle-&gt;CallReceiverTypes(this, name, call_kind, &amp;receiver_types_); &lt;--
+
+  check_type_ = oracle-&gt;GetCallCheckType(this);                       &lt;--
+  if (is_monomorphic_) {
+    if (receiver_types_.length() &gt; 0) {
+    } else {
+      holder_ = Handle&lt;JSObject&gt;(
+        oracle-&gt;GetPrototypeForPrimitiveCheck(check_type_));          &lt;--
+    }
+    is_monomorphic_ = ComputeTarget(map, name);
+  }</pre>
+</div>
+</div>
+<div class="section" id="class-countoperation-public-expression">
+<h3>class CountOperation: public Expression<a class="headerlink" href="#class-countoperation-public-expression" title="Permalink to this headline">¶</a></h3>
+<p>void CountOperation::RecordTypeFeedback(TypeFeedbackOracle* oracle)</p>
+<div class="highlight-python"><pre>is_monomorphic_ = oracle-&gt;StoreIsMonomorphicNormal(this);            &lt;--
+...
+if (is_monomorphic_) {
+  // Record receiver type for monomorphic keyed stores.
+  receiver_types_.Add(oracle-&gt;StoreMonomorphicReceiverType(this));   &lt;--
+} else if (oracle-&gt;StoreIsMegamorphicWithTypeInfo(this)) {           &lt;--
+  receiver_types_.Reserve(kMaxKeyedPolymorphism);
+  oracle-&gt;CollectKeyedReceiverTypes(this-&gt;id(), &amp;receiver_types_);   &lt;--
+}</pre>
+</div>
+</div>
+<div class="section" id="class-compareoperation-public-expression">
+<h3>class CompareOperation: public Expression<a class="headerlink" href="#class-compareoperation-public-expression" title="Permalink to this headline">¶</a></h3>
+<p>void CompareOperation::RecordTypeFeedback(TypeFeedbackOracle* oracle)</p>
+<div class="highlight-python"><pre>TypeInfo info = oracle-&gt;CompareType(this);                         &lt;--
+if (info.IsSmi()) {
+  compare_type_ = SMI_ONLY;
+} else if (info.IsNonPrimitive()) {
+  compare_type_ = OBJECT_ONLY;</pre>
+</div>
+</div>
+<div class="section" id="class-assignment-public-expression">
+<h3>class Assignment: public Expression<a class="headerlink" href="#class-assignment-public-expression" title="Permalink to this headline">¶</a></h3>
+<p>void Assignment::RecordTypeFeedback(TypeFeedbackOracle* oracle)</p>
+<div class="highlight-python"><pre>...
+is_monomorphic_ = oracle-&gt;StoreIsMonomorphicNormal(this);          &lt;--
+...
+} else if (is_monomorphic_) {
+  // Record receiver type for monomorphic keyed stores.
+  receiver_types_.Add(oracle-&gt;StoreMonomorphicReceiverType(this)); &lt;--
+} else if (oracle-&gt;StoreIsMegamorphicWithTypeInfo(this)) {         &lt;--
+  receiver_types_.Reserve(kMaxKeyedPolymorphism);
+  oracle-&gt;CollectKeyedReceiverTypes(this-&gt;id(), &amp;receiver_types_); &lt;--
+}</pre>
+</div>
+</div>
+</div>
+<div class="section" id="ast">
+<h2>ASTの各メソッドの概要<a class="headerlink" href="#ast" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="hydrogen">
+<h2>hydrogenの型推論<a class="headerlink" href="#hydrogen" title="Permalink to this headline">¶</a></h2>
+<p>HValueが基底クラスで、各NodeがCalculateInferredType()を定義</p>
+<dl class="docutils">
+<dt>bool HValue::UpdateInferredType() {</dt>
+<dd>HType type = CalculateInferredType();
+bool result = (!type.Equals(<a href="#id5"><span class="problematic" id="id6">type_</span></a>));
+<a href="#id7"><span class="problematic" id="id8">type_</span></a> = type;
+return result;</dd>
+</dl>
+<p>}</p>
+<p>InitializeInferredTypes()
+InferTypes()</p>
+<p>HInferRepresentation</p>
 <hr class="docutils" />
-<hr class="docutils" />
-<hr class="docutils" />
+</div>
 </div>
 
 
@@ -67,7 +306,11 @@
       <div class="bottomnav">
       
         <p>
+        «&#160;&#160;<a href="optimize.html">Crankshaft optimize</a>
+        &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="c_image.html">c_image</a>&#160;&#160;»
         </p>
 
       </div>

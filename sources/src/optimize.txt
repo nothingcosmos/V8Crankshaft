@@ -1,26 +1,6 @@
 Crankshaft optimize
 ################################################################################
 
-MakeCrankshaftCode
-================================================================================
-
-コンパイルのメイン処理 ::
-
-  Handle<Context> global_context(info->closure()->context()->global_context());
-  TypeFeedbackOracle oracle(code, global_context, info->isolate());
-  HGraphBuilder builder(info, &oracle);
-  HPhase phase(HPhase::kTotal);
-  HGraph* graph = builder.CreateGraph();                     <-- high-level
-
-  if (graph != NULL && FLAG_build_lithium) {
-    Handle<Code> optimized_code = graph->Compile(info);      <-- low-level
-    if (!optimized_code.is_null()) {
-      info->SetCode(optimized_code);
-      FinishOptimization(info->closure(), start);
-      return true;
-    }
-  }
-
 builder.CreateGraph()
 ================================================================================
 
@@ -46,14 +26,14 @@ builder.CreateGraph()
   graph()->EliminateUnreachablePhis();
   graph()->CollectPhis();
   
-  HInferRepresentation rep(graph());
+  HInferRepresentation rep(graph());   <-- 
   rep.Analyze()
   
   graph()->MarkDeoptimizeOnUndefined();
   graph()->InsertRepresentationChanges();
   
-  graph()->InitializeInferredTypes();
-  graph()->Canonicalize();
+  graph()->InitializeInferredTypes();  <-- 型推論
+  graph()->Canonicalize();             <-- 型推論の結果を参照して冗長な型チェックを削除する
   
   HGlobalValueNumberer gvn()       <-- GVN
   gvn.Analyze()
@@ -71,35 +51,13 @@ builder.CreateGraph()
   graph()->ReplacedCheckedValues();
 
 
-HGraph::Compile()
-================================================================================
-
-Compile()は、low-level向けの最適化およびコード生成まで行う
-
-lithiumが主役かな。各アーキテクチャ依存の処理を行う。
-
-大まかな流れ ::
-
-  LAllocator allocator();
-  LChunkBuilder builder(info, this, &allocator);
-  LChunk* chunk = builder.Build();
-  
-  allocator.Allocate(chunk);
-  
-  MacroAssembler assembler(info ...);
-  LCodeGen generator(chunk, &assembler, info);
-  
-  generator.Generatecode();
-  CodeGenerator::MarkCodePrologu(info);
-  code = CodeGenerator::MarkCodeEpilogue(&assembler, flags, info);
-  generator.FinishCode(code)
-  CodeGenerator::PrintCode(code, info);
-
 Optimizeの詳細
 ################################################################################
 
 HGlobalValueNumberer::AnalyzeBlock
 ================================================================================
+
+  AnalyzeBlockなのに、副作用ありでがんがん最適化していく
 
 
 HGlobalValueNumberer::LoopInvariantCodeMotion()
@@ -184,7 +142,42 @@ HGraphBuilder::TryInline()
 HRangeAnalysis::Analyze
 ================================================================================
 
-todo
+
+HGraph::Canonicalize()
+================================================================================
+
+void HGraph::Canonicalize() ::
+
+  ブロックを走査しながら、
+    ブロック中のInstrを走査しながら、
+      instr->Canonicalize()を叩いてまわる
+      // if (value != instr) instr->DeleteAndReplaceWith(value);
+      副作用があれば、旧ノードを消して、旧ノードの使用点を新しいノードが引き継ぐ
+
+Canonicalize()の詳細
+--------------------------------------------------------------------------------
+
+型推論後のinstr前提の処理であり、
+
+型が確定しているNodeの冗長なチェック処理を削除していく
+
+
+見どころ
+--------------------------------------------------------------------------------
+
+instr->DeleteAndReplaceWith(value)の詳細 ::
+
+  if (other != NULL) ReplaceAllUsesWith(other);
+  ClearOperands();
+  DeleteFromGraph();
+
+ReplaceAllUsesWithとか、llvmを参考にしてるように思う。
+
+でも中間表現はgraphベースだから、最適化のアルゴリズムは難しい。
+
+
+
+
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------

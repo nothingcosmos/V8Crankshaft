@@ -62,6 +62,33 @@
 <p>Runtime_LazyRecompile</p>
 <p>opt_count</p>
 <p>kMaxOptCount</p>
+<p>RuntimeProfilerRateLimiter</p>
+</div>
+</div>
+<div class="section" id="profile-generator">
+<h2>profile-generator<a class="headerlink" href="#profile-generator" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="ic">
+<h2>IC<a class="headerlink" href="#ic" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="type-info-h-included-ic-h">
+<h3>type-info.h included ic.h<a class="headerlink" href="#type-info-h-included-ic-h" title="Permalink to this headline">¶</a></h3>
+<hr class="docutils" />
+<p>ia32/code-stubs-ia32.hpp</p>
+<p>// Operand type information determined at runtime.
+BinaryOpIC::TypeInfo <a href="#id3"><span class="problematic" id="id4">operands_type_</span></a>;
+BinaryOpIC::TypeInfo <a href="#id5"><span class="problematic" id="id6">result_type_</span></a>;</p>
+<p>// Operand type information determined at runtime.
+UnaryOpIC::TypeInfo <a href="#id7"><span class="problematic" id="id8">operand_type_</span></a>;</p>
+<p>最初のfull-codegenが生成するのは、UninitializedなIC</p>
+<p>結局、ic.cc/hpp</p>
+<p><a class="reference external" href="file:flag-definitions.hpp">file:flag-definitions.hpp</a>
+//
+// Logging and profiling flags
+//
+#undef FLAG
+#define FLAG FLAG_FULL</p>
+<p>もしかして、storeICとかloadICに対して、
+type profileしているのか</p>
 <hr class="docutils" />
 </div>
 </div>

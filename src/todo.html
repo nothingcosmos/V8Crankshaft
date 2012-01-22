@@ -1,0 +1,226 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>todo &mdash; V8 Crankshaft Overview 1.3 documentation</title>
+    
+    <link rel="stylesheet" href="../static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/print.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/theme_extras.js"></script>
+    <link rel="top" title="V8 Crankshaft Overview 1.3 documentation" href="../index.html" />
+    <link rel="prev" title="c_image" href="c_image.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="../index.html">
+          <span>V8 Crankshaft Overview 1.3 documentation</span></a></h1>
+        <h2 class="heading"><span>todo</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        «&#160;&#160;<a href="c_image.html">c_image</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="todo">
+<h1>todo<a class="headerlink" href="#todo" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>興味を持った点と疑問点<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="a-base-compiler-full-codegen">
+<h3>(1) A base compiler(full-codegen)が生成したコード<a class="headerlink" href="#a-base-compiler-full-codegen" title="Permalink to this headline">¶</a></h3>
+<p>(1-1)</p>
+<div class="highlight-python"><pre>どんなコードを吐くのか。JavaScript初心者なので、どんな汎用的なコードに落ちるのか興味あります。</pre>
+</div>
+<p>full-codegenでcodeを参照して大まかには理解できた。</p>
+<p>uninisializeなICをひたすら生成してあるく。らしい。</p>
+<p>&#8211;print_codeで、full-codegenが生成したコードを参照するのがよいかも。</p>
+<p>ICの中身はV8でAsmを叩いて生成している。</p>
+<p>(1-2)</p>
+<div class="highlight-python"><pre>V8は再帰関数がxxx monkeyと比較して速いという話を聞いたことがあったので、
+full-codegenが関数をstab越しに呼び出す際に何らかのトリックを使っていそう。</pre>
+</div>
+<p>code cacheの仕組みであったり、ICがよくできているのだと思う。</p>
+<p>恐らくだが、V8祭りの記事を熟読すれば理解できるはず</p>
+<p>(1-3)</p>
+<div class="highlight-python"><pre>hot codeを判断するため、runtimeと連携してprofileを取得する命令をfull-codegenは埋め込むはず。
+遅延を最小にする工夫と、どんなprofile情報を取得しているのか。</pre>
+</div>
+<p>どこでやっているのか不明。</p>
+<p>恐らくだが、uninisialized ICの中で行っているはず。</p>
+<p>現時点での予想としては、load/storeのICの中で行っているのかも。</p>
+<p>その結果を型推論して、operand returnに伝搬していくのかもしれない。</p>
+<p>もしかしたら、binaryopやunaryのICに入っていないのかもしれない。</p>
+<p>データの中身は、テーブルで持っているのだと思う。</p>
+</div>
+<div class="section" id="crankshaft">
+<h3>(2) Crankshaftが生成したコード<a class="headerlink" href="#crankshaft" title="Permalink to this headline">¶</a></h3>
+<p>(2-1)</p>
+<div class="highlight-python"><pre>crankshaftは最も高速なコードを生成するはずで、どんなコードを吐くのか。</pre>
+</div>
+<p>&#8211;print_codeの結果を参照して大まかには理解できた。</p>
+<p>smi/heapの違いに着目すれば、大体のコードは追える。</p>
+<p>基本的には、smiをguardして、type-stableな区間を仮定してコードを生成していくはず。</p>
+<p>smiをtype-stableにコーディングするかぎり、非常に高速に動作するはず。</p>
+<p>追加の疑問点として、</p>
+<p>stringを使用した場合、どのようにguardするのか。</p>
+<p>stringaddが高速らしい。</p>
+<p>stringaddは、StringAddStubを読んでいる。Crankshaftでも同様。</p>
+<p>StringAddStubの中では、各アーキテクチャの下でasmを叩くのだが、かなり長い。</p>
+<p>jsのStringはimmutableなので、StringAddが高速なropeアルゴリズムの使用しているらしい。</p>
+<p>smiのguardが冗長に思うのだが、smiのguardがlithiumの段階でもmacroとして存在しているのが原因だろうか。</p>
+<p>その辺を速い段階でmacro expandして、何らかの最適化をかければ、冗長なコードを除去できるように思う。</p>
+<p>たとえば、llvmのlazy value infoとcorrepsed value propagationを使用すれば改善できる可能性がある。</p>
+<p>実際にコーディングしてみるか？</p>
+<p>(2-2)</p>
+<div class="highlight-python"><pre>deoptimizeが発生後、full-codegenへ戻るが、その後の挙動はどうなるのか。
+たとえば、full-codegenは再度プロファイル情報を取得しながらCrankshaftでのJITコンパイルの機会を伺うのか、
+同じ関数のCrankshaftでのJITコンパイルに上限を設けるのか。
+profile情報を落としてfull-codegenでコンパイルを行い、ずっとfull-codegenで実行するのか。</pre>
+</div>
+<p>&gt;&gt; 未調査</p>
+<p>(2-3)</p>
+<div class="highlight-python"><pre>inliningの仕組み。たとえば、JVMは呼び出し候補が複数ある場合、かつ第1候補が9割の確率で呼ばれる場合、
+第1候補をinliningする。CrankshaftがStabコードのまま扱うのか、inliningする条件が気になる。</pre>
+</div>
+<p>&gt;&gt; 調査途中の奴が、optimizeに記述しているはず</p>
+<p>(2-4)</p>
+<div class="highlight-python"><pre>runtime profilerで型情報に関する情報を取得し、型推論した上でCrankshaftでJITコンパイルするはず。
+aggressiveに型推論した場合の保証コード+Trapの有無と、型推論の実装はどうなっているのか。</pre>
+</div>
+<p>&gt;&gt; smiのケースは、普通にguardするだけ。</p>
+<p>(2-5)</p>
+<div class="highlight-python"><pre>型推論の結果をどのように適用するのか。ASTレベルなのかHIRレベルなのか。</pre>
+</div>
+<p>&gt;&gt; ASTからhydrogenへの変換持に、type-feedback-oracleによって、ASTへ簡単な型推論の情報を戻しているように思う。</p>
+<p>load/storeに限定してだが。 型推論は、type-infe-initializeで行っており、
+operand-typeやresult-typeの型をforwardingして伝搬していくようなアルゴリズムになっている。
+伝搬してoperandtypeやresulttypeが確定したのち、冗長な型チェックを除去するパスが走る。</p>
+<p>追加の疑問点</p>
+<p>smi以外のケースや、確定していないケースにおいて、どのようなコードを生成するのかどうか。
+ICに頼るのか？ICもuninitialize以外に多数存在したので、genericなICを生成するのかもしれない。</p>
+<p>typefeedback oracleの結果は、具体的にどのように活用されるのか。
+crankshaftでrecompileした際に使うはず。</p>
+<p>異なる型だからこそ、craqnkshaftからdeoptimizeされ、またrecompileされる
+そこでtype-feedback-oraleが活用されるのかもしれない。
+テストするための具体的なコードを作成したい。</p>
+<p>(2-6)</p>
+<div class="highlight-python"><pre>JVM HotSpot C1の生成したコードとどっちが速いか。</pre>
+</div>
+<p>未調査。</p>
+<p>type-stableにコーディングする限り、かなり高速な印象。</p>
+<p>loop-invariant-code-motionの有無やStringAddのため、C1より高速なコードを生成できるはず。</p>
+<p>jsのクラスやプロパティの仕組みがまだよくわかってないが、</p>
+<p>jsのその辺が動的であり、crankshaftで冗長性を除去できない場合、C1のほうが高速に動作するかも。</p>
+</div>
+<div class="section" id="hot-code">
+<h3>(3) hot codeのコンパイルの判断<a class="headerlink" href="#hot-code" title="Permalink to this headline">¶</a></h3>
+<p>(3-1)</p>
+<div class="highlight-python"><pre>最初にfull-codegenで生成したコードを実行し、hot codeだと判断したら、
+CrankshaftでJITコンパイルするはず。
+hot codeだと判断する条件は、しきい値以上に呼び出される関数であるかどうか、
+しきい値以上に実行されるループのどちらかのはず。
+hot codeであると判断する上で、runtime profilerとどのように連携するのかどうか。</pre>
+</div>
+<p>正確なしきい値で表現できないように思う。</p>
+<p>loopの中でfunctionを何度も呼ぶようなケースでは、
+inline展開して、その親関数をCrankshaftでコンパイルしてOSRされがち。</p>
+<p>再帰関数の場合はcrankshaftでrecompileされるのだが、
+再帰でないケースは、Crankshftでコンパイルさせるのは難しいかも</p>
+</div>
+<div class="section" id="id2">
+<h3>(4) Crankshaftの中間表現とコンパイルパイプラインのデザインに関して<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>(4-1)</p>
+<div class="highlight-python"><pre>SSA形式といっても、色々あるので、どんな中間表現なのか。</pre>
+</div>
+<p>中間表現の構造は、graphベースでphiはinstructionとして表現されていない。</p>
+<p>内部のアルゴリズムも、C2のIdealみたいに動作する。</p>
+<p>すべてがC2のIdealみたいに細かい粒度の命令ではなく、</p>
+<p>StringAddやICが混在した状態で動作することを前提としており、</p>
+<p>ところどころかなり粒度の粗いmacroが入っているところがおもしろい。</p>
+<p>(4-2)</p>
+<div class="highlight-python"><pre>OSR/Deoptimizeの仕組み。 Tableの仕組みやSafecodeに関して。</pre>
+</div>
+<p>&gt;&gt; 未調査</p>
+<p>(4-3)</p>
+<div class="highlight-python"><pre>Profile情報の、JavaScript固有の活用方法</pre>
+</div>
+<p>&gt;&gt; 大体わかったはず。</p>
+<p>型情報はload/storeを起点にして収集し、型情報をforwadingして伝搬してく。</p>
+<p>その後、型情報を利用してbox/unboxの除去を行ったり、冗長な型キャストを除去している</p>
+<p>型推論がなくてもguardすればよいが、上記の冗長な命令の除去につながるのだと思う。</p>
+</div>
+<div class="section" id="id3">
+<h3>(5) 追加の宿題<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><p>typeinference-initialize</p>
+<p>hydrogenの本格的な構造</p>
+<p>lithiumの構造と、lithiumの最適化アルゴリズム</p>
+<p>調査結果をsphinxでまとめるのはいいとして、順番に構造化したい。
+sphinxのrstをファイルで分割して、うまく構造化するための方法を調査し、
+blogファイルをメインとして、調査を追加していくような使い方をしたい。
+トップダウンのケースにおいて、うまいまとめかたがあるのかどうか。</p>
+</div></blockquote>
+</div>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        «&#160;&#160;<a href="c_image.html">c_image</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        </p>
+
+      </div>
+
+
+    <div class="footer">
+        &copy; Copyright 2011, nothingcosmos.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.
+    </div>
+
+<script type="text/javascript">
+
+var _gaq = _gaq || [];
+_gaq.push(['_setAccount', 'UA-15223787-3']);
+_gaq.push(['_trackPageview']);
+
+(function() {
+ var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+ ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+ })();
+
+</script>
+
+
+  </body>
+</html>

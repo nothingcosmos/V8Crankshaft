@@ -27,7 +27,9 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <script type="text/javascript" src="../_static/theme_extras.js"></script>
-    <link rel="top" title="V8 Crankshaft Overview 1.3 documentation" href="../index.html" /> 
+    <link rel="top" title="V8 Crankshaft Overview 1.3 documentation" href="../index.html" />
+    <link rel="next" title="type inference" href="type_inference.html" />
+    <link rel="prev" title="V8のJITコンパイラ、Crankshaftについて" href="blog.html" /> 
   </head>
   <body>
       <div class="header"><h1 class="heading"><a href="../index.html">
@@ -37,7 +39,11 @@
       <div class="topnav">
       
         <p>
+        «&#160;&#160;<a href="blog.html">V8のJITコンパイラ、Crankshaftについて</a>
+        &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="type_inference.html">type inference</a>&#160;&#160;»
         </p>
 
       </div>
@@ -46,25 +52,6 @@
         
   <div class="section" id="crankshaft-optimize">
 <h1>Crankshaft optimize<a class="headerlink" href="#crankshaft-optimize" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="makecrankshaftcode">
-<h2>MakeCrankshaftCode<a class="headerlink" href="#makecrankshaftcode" title="Permalink to this headline">¶</a></h2>
-<p>コンパイルのメイン処理</p>
-<div class="highlight-python"><pre>Handle&lt;Context&gt; global_context(info-&gt;closure()-&gt;context()-&gt;global_context());
-TypeFeedbackOracle oracle(code, global_context, info-&gt;isolate());
-HGraphBuilder builder(info, &amp;oracle);
-HPhase phase(HPhase::kTotal);
-HGraph* graph = builder.CreateGraph();                     &lt;-- high-level
-
-if (graph != NULL &amp;&amp; FLAG_build_lithium) {
-  Handle&lt;Code&gt; optimized_code = graph-&gt;Compile(info);      &lt;-- low-level
-  if (!optimized_code.is_null()) {
-    info-&gt;SetCode(optimized_code);
-    FinishOptimization(info-&gt;closure(), start);
-    return true;
-  }
-}</pre>
-</div>
-</div>
 <div class="section" id="builder-creategraph">
 <h2>builder.CreateGraph()<a class="headerlink" href="#builder-creategraph" title="Permalink to this headline">¶</a></h2>
 <p>大まかな流れ</p>
@@ -88,14 +75,14 @@ graph()-&gt;EliminateRedundantPhis();
 graph()-&gt;EliminateUnreachablePhis();
 graph()-&gt;CollectPhis();
 
-HInferRepresentation rep(graph());
+HInferRepresentation rep(graph());   &lt;--
 rep.Analyze()
 
 graph()-&gt;MarkDeoptimizeOnUndefined();
 graph()-&gt;InsertRepresentationChanges();
 
-graph()-&gt;InitializeInferredTypes();
-graph()-&gt;Canonicalize();
+graph()-&gt;InitializeInferredTypes();  &lt;-- 型推論
+graph()-&gt;Canonicalize();             &lt;-- 型推論の結果を参照して冗長な型チェックを削除する
 
 HGlobalValueNumberer gvn()       &lt;-- GVN
 gvn.Analyze()
@@ -113,32 +100,13 @@ sce.Process();
 graph()-&gt;ReplacedCheckedValues();</pre>
 </div>
 </div>
-<div class="section" id="hgraph-compile">
-<h2>HGraph::Compile()<a class="headerlink" href="#hgraph-compile" title="Permalink to this headline">¶</a></h2>
-<p>Compile()は、low-level向けの最適化およびコード生成まで行う</p>
-<p>lithiumが主役かな。各アーキテクチャ依存の処理を行う。</p>
-<p>大まかな流れ</p>
-<div class="highlight-python"><pre>LAllocator allocator();
-LChunkBuilder builder(info, this, &amp;allocator);
-LChunk* chunk = builder.Build();
-
-allocator.Allocate(chunk);
-
-MacroAssembler assembler(info ...);
-LCodeGen generator(chunk, &amp;assembler, info);
-
-generator.Generatecode();
-CodeGenerator::MarkCodePrologu(info);
-code = CodeGenerator::MarkCodeEpilogue(&amp;assembler, flags, info);
-generator.FinishCode(code)
-CodeGenerator::PrintCode(code, info);</pre>
-</div>
-</div>
 </div>
 <div class="section" id="optimize">
 <h1>Optimizeの詳細<a class="headerlink" href="#optimize" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="hglobalvaluenumberer-analyzeblock">
 <h2>HGlobalValueNumberer::AnalyzeBlock<a class="headerlink" href="#hglobalvaluenumberer-analyzeblock" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div>AnalyzeBlockなのに、副作用ありでがんがん最適化していく</div></blockquote>
 </div>
 <div class="section" id="hglobalvaluenumberer-loopinvariantcodemotion">
 <h2>HGlobalValueNumberer::LoopInvariantCodeMotion()<a class="headerlink" href="#hglobalvaluenumberer-loopinvariantcodemotion" title="Permalink to this headline">¶</a></h2>
@@ -206,8 +174,32 @@ VisitStatemens()</p>
 </div>
 <div class="section" id="hrangeanalysis-analyze">
 <h2>HRangeAnalysis::Analyze<a class="headerlink" href="#hrangeanalysis-analyze" title="Permalink to this headline">¶</a></h2>
-<p>todo</p>
+</div>
+<div class="section" id="hgraph-canonicalize">
+<h2>HGraph::Canonicalize()<a class="headerlink" href="#hgraph-canonicalize" title="Permalink to this headline">¶</a></h2>
+<p>void HGraph::Canonicalize()</p>
+<div class="highlight-python"><pre>ブロックを走査しながら、
+  ブロック中のInstrを走査しながら、
+    instr-&gt;Canonicalize()を叩いてまわる
+    // if (value != instr) instr-&gt;DeleteAndReplaceWith(value);
+    副作用があれば、旧ノードを消して、旧ノードの使用点を新しいノードが引き継ぐ</pre>
+</div>
+<div class="section" id="canonicalize">
+<h3>Canonicalize()の詳細<a class="headerlink" href="#canonicalize" title="Permalink to this headline">¶</a></h3>
+<p>型推論後のinstr前提の処理であり、</p>
+<p>型が確定しているNodeの冗長なチェック処理を削除していく</p>
+</div>
+<div class="section" id="id1">
+<h3>見どころ<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>instr-&gt;DeleteAndReplaceWith(value)の詳細</p>
+<div class="highlight-python"><pre>if (other != NULL) ReplaceAllUsesWith(other);
+ClearOperands();
+DeleteFromGraph();</pre>
+</div>
+<p>ReplaceAllUsesWithとか、llvmを参考にしてるように思う。</p>
+<p>でも中間表現はgraphベースだから、最適化のアルゴリズムは難しい。</p>
 <hr class="docutils" />
+</div>
 </div>
 </div>
 
@@ -216,7 +208,11 @@ VisitStatemens()</p>
       <div class="bottomnav">
       
         <p>
+        «&#160;&#160;<a href="blog.html">V8のJITコンパイラ、Crankshaftについて</a>
+        &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="type_inference.html">type inference</a>&#160;&#160;»
         </p>
 
       </div>

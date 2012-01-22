@@ -13,6 +13,11 @@ Contents:
 
    src/blog
 
+   src/optimize
+   src/type_inference
+   src/c_image
+   src/todo
+
 Indices and tables
 ==================
 

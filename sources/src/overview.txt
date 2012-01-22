@@ -43,6 +43,7 @@ Crankshaft関連のファイル::
   hydrogen-instructions  6.5kstep
   lithium                  1kstep
   lithium-allocator      3.0kstep
+  type-info              0.8kstep
 
   ia32/lithium*         10  kstep
   ia32/codegen           0.7kstep
