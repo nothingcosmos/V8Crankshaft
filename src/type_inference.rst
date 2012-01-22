@@ -88,25 +88,29 @@ hydrogen中では、oracle_ もしくはoracle() で参照可能らしいので�
 hydrogenの中でoracleを参照してる箇所
 --------------------------------------------------------------------------------
 
-void TestContext::BuildBranch(HValue* value) {
+oracleへの型情報のフィードバックは、hydrogenのgraphを生成する際に行う。
+
+code ::
+
+  void TestContext::BuildBranch(HValue* value) {
   ...
   ToBooleanStub::Types expected(builder->oracle()->ToBooleanTypes(test_id));
 
 
-void HGraphBuilder::VisitSwitchStatement(SwitchStatement* stmt) {
+  void HGraphBuilder::VisitSwitchStatement(SwitchStatement* stmt) {
   if (switch_type == SMI_SWITCH) {
     clause->RecordTypeFeedback(oracle());
   }
 
-void HGraphBuilder::HandlePropertyAssignment(Assignment* expr) {
+  void HGraphBuilder::HandlePropertyAssignment(Assignment* expr) {
   expr->RecordTypeFeedback(oracle());
 
 
-void HGraphBuilder::VisitProperty(Property* expr) {
+  void HGraphBuilder::VisitProperty(Property* expr) {
   expr->RecordTypeFeedback(oracle());
 
 
-bool HGraphBuilder::TryInline(Call* expr, bool drop_extra) {
+  bool HGraphBuilder::TryInline(Call* expr, bool drop_extra) {
   // ----------------------------------------------------------------
   // After this point, we've made a decision to inline this function (so
   // TryInline should always return true).
@@ -122,23 +126,23 @@ bool HGraphBuilder::TryInline(Call* expr, bool drop_extra) {
   FunctionState* target_state =
     new FunctionState(this, &target_info, &target_oracle, drop_extra);
 
-void HGraphBuilder::VisitCall(Call* expr) {
+  void HGraphBuilder::VisitCall(Call* expr) {
   // Named function call.
   expr->RecordTypeFeedback(oracle(), CALL_AS_METHOD);
 
   expr->RecordTypeFeedback(oracle(), CALL_AS_FUNCTION);
 
-void HGraphBuilder::VisitSub(UnaryOperation* expr) {
+  void HGraphBuilder::VisitSub(UnaryOperation* expr) {
   TypeInfo info = oracle()->UnaryType(expr);
 
-以降、UnaryOperationに同様の処理が続くので省略
+  以降、UnaryOperationに同様の処理が続くので省略
 
-HInstruction* HGraphBuilder::BuildBinaryOperation(BinaryOperation* expr,
+  HInstruction* HGraphBuilder::BuildBinaryOperation(BinaryOperation* expr,
                                                   HValue* left,
                                                   HValue* right) {
   TypeInfo info = oracle()->BinaryType(expr);
 
-void HGraphBuilder::VisitCompareOperation(CompareOperation* expr) {
+  void HGraphBuilder::VisitCompareOperation(CompareOperation* expr) {
   TypeInfo type_info = oracle()->CompareType(expr);
 
 
@@ -147,14 +151,14 @@ ASTでoracleを参照している箇所
 
 ASTでもoracleの参照箇所はあり、上記のRecordTypeFeedback()からASTのNodeへfeedbackしているように見える
 
-RecordTypeFeedback()が用意されているASTのNode
+RecordTypeFeedback()が用意されているASTのNode ::
+
   class CaseClause : public ZoneObject
   class Property: public Expression
   class Call: public Expression          <-- CallKind call_kind を追加で与える CALL_AS_METHOD|CALL_AS_FUNCTION
   class CountOperation: public Expression
   class CompareOperation: public Expression
   class Assignment: public Expression
-
 
 
 class CaseClause : public ZoneObject
@@ -262,7 +266,7 @@ void Assignment::RecordTypeFeedback(TypeFeedbackOracle* oracle) ::
   } else if (oracle->StoreIsMegamorphicWithTypeInfo(this)) {         <--
     receiver_types_.Reserve(kMaxKeyedPolymorphism);
     oracle->CollectKeyedReceiverTypes(this->id(), &receiver_types_); <--
-  }  
+  }
 
 
 
@@ -271,15 +275,9 @@ void Assignment::RecordTypeFeedback(TypeFeedbackOracle* oracle) ::
 ASTの各メソッドの概要
 ================================================================================
 
+--------------------------------------------------------------------------------
+...
 
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
-
-winglogの意訳
-================================================================================
-
---------------------------------------------------------------------------------
 
 hydrogenの型推論
 ================================================================================
@@ -298,4 +296,7 @@ InferTypes()
 
 HInferRepresentation
 
+
+================================================================================
+--------------------------------------------------------------------------------
 --------------------------------------------------------------------------------

@@ -1,26 +1,6 @@
 Crankshaft optimize
 ################################################################################
 
-MakeCrankshaftCode
-================================================================================
-
-コンパイルのメイン処理 ::
-
-  Handle<Context> global_context(info->closure()->context()->global_context());
-  TypeFeedbackOracle oracle(code, global_context, info->isolate());
-  HGraphBuilder builder(info, &oracle);
-  HPhase phase(HPhase::kTotal);
-  HGraph* graph = builder.CreateGraph();                     <-- high-level
-
-  if (graph != NULL && FLAG_build_lithium) {
-    Handle<Code> optimized_code = graph->Compile(info);      <-- low-level
-    if (!optimized_code.is_null()) {
-      info->SetCode(optimized_code);
-      FinishOptimization(info->closure(), start);
-      return true;
-    }
-  }
-
 builder.CreateGraph()
 ================================================================================
 
@@ -70,30 +50,6 @@ builder.CreateGraph()
   
   graph()->ReplacedCheckedValues();
 
-
-HGraph::Compile()
-================================================================================
-
-Compile()は、low-level向けの最適化およびコード生成まで行う
-
-lithiumが主役かな。各アーキテクチャ依存の処理を行う。
-
-大まかな流れ ::
-
-  LAllocator allocator();
-  LChunkBuilder builder(info, this, &allocator);
-  LChunk* chunk = builder.Build();
-  
-  allocator.Allocate(chunk);
-  
-  MacroAssembler assembler(info ...);
-  LCodeGen generator(chunk, &assembler, info);
-  
-  generator.Generatecode();
-  CodeGenerator::MarkCodePrologu(info);
-  code = CodeGenerator::MarkCodeEpilogue(&assembler, flags, info);
-  generator.FinishCode(code)
-  CodeGenerator::PrintCode(code, info);
 
 Optimizeの詳細
 ################################################################################

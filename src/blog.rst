@@ -212,27 +212,9 @@ OnStackReplacementとは、
 4. サンプルコード
 -----------------------------------------------------------
 
-FactIF ::
+FactIF
 
-  function FactIf(n) {
-    var p;
-    if (n > 1) {
-      p = n * FactIf(n - 1);
-    } else {
-      p = 1;
-    }
-    return p;
-  }
-  
-  function Bench() {
-    for (i=0; i<100000; i++) {
-      ret = FactIf(i%100);
-      print ('--- ' + i + ':'  + ret + '---');
-    }
-  }
-  
-  Bench();
-
+.. literalinclude:: out/fact_if.js
 
 5. 実行方法
 -----------------------------------------------------------
@@ -344,7 +326,7 @@ Crankshaftの内部
 Crankshaftの入り口は、MakeCrankshaftCode() ::
 
   Handle<Context> global_context(info->closure()->context()->global_context());
-  TypeFeedbackOracle oracle(code, global_context, info->isolate());    <-- Hydrogenの型情報や推論結果をASTへフィードバックする？
+  TypeFeedbackOracle oracle(code, global_context, info->isolate());    <-- Hydrogenの型情報や推論結果をASTへフィードバックする
   HGraphBuilder builder(info, &oracle);
   HPhase phase(HPhase::kTotal);
   HGraph* graph = builder.CreateGraph();                               <-- high-level
@@ -406,13 +388,12 @@ Hydrogenの大まかな流れ ::
   graph()->EliminateRedundantPhis();
   graph()->EliminateUnreachablePhis();
   graph()->CollectPhis();
-  
-  HInferRepresentation rep(graph());
+
+  HInferRepresentation rep(graph());        <-- 型情報を使ってboxing unboxingの削除
   rep.Analyze()
-  
+
   graph()->MarkDeoptimizeOnUndefined();
   graph()->InsertRepresentationChanges();
-
 
   graph()->InitializeInferredTypes();       <-- 型推論
   graph()->Canonicalize();                  <-- 確定した型情報を参照し、冗長な型チェックを除去する
@@ -458,40 +439,7 @@ lithiumの大まかな流れ ::
 AST Image
 ================================================================================
 
-FactIf AST ::
-
-  *** Generate code for user-defined function: 0x53717ff5 <String[6]: FactIf> ***
-  --- AST ---
-  FUNC
-  . NAME "FactIf"
-  . INFERRED NAME ""
-  . PARAMS
-  . . VAR (mode = VAR) "n"
-  . DECLS
-  . . VAR (mode = VAR) "p"
-  . BLOCK INIT
-  . IF
-  . . GT
-  . . . VAR PROXY parameter[0] (mode = VAR) "n"
-  . . . LITERAL 1
-  . THEN
-  . . BLOCK
-  . . . ASSIGN
-  . . . . VAR PROXY local[0] (mode = VAR) "p"
-  . . . . MUL
-  . . . . . VAR PROXY parameter[0] (mode = VAR) "n"
-  . . . . . CALL
-  . . . . . . VAR PROXY (mode = DYNAMIC_GLOBAL) "FactIf"
-  . . . . . . SUB
-  . . . . . . . VAR PROXY parameter[0] (mode = VAR) "n"
-  . . . . . . . LITERAL 1
-  . ELSE
-  . . BLOCK
-  . . . ASSIGN
-  . . . . VAR PROXY local[0] (mode = VAR) "p"
-  . . . . LITERAL 1
-  . RETURN
-  . . VAR PROXY local[0] (mode = VAR) "p"
+.. literalinclude:: out/fact_if.ast
 
 hydrogen image
 ================================================================================
@@ -588,166 +536,15 @@ FactIf lithium::
 Crankshaft generate code
 ================================================================================
 
-入力ソース ::
+full-codegenが生成したコードと、Crankshaftが生成したコードを示します。
 
-  --- Raw source ---
-  (n) {
-    var p;
-    if (n > 1) {
-      p = n * FactIf(n - 1);
-    } else {
-      p = 1;
-    }
-    return p;
-  }
+最初がfull-codegenが生成したコードで、MUL SUB IFなども全てICになっています。
 
+Crankshaftが生成したコードは、smi(Small Integer)かどうかのチェック(ガード)を随所に挿入し、
 
-x86 generated code ::
+高速なコードを生成しています。
 
-  --- Optimized code ---
-  kind = OPTIMIZED_FUNCTION
-  name = FactIf
-  stack_slots = 1
-  Instructions (size = 512)
-  0x29027a00     0  55             push ebp
-  0x29027a01     1  89e5           mov ebp,esp
-  0x29027a03     3  56             push esi
-  0x29027a04     4  57             push edi
-  0x29027a05     5  83ec04         sub esp,0x4
-  0x29027a08     8  8b45fc         mov eax,[ebp+0xfc]
-  0x29027a0b    11  8945f4         mov [ebp+0xf4],eax
-  0x29027a0e    14  89c6           mov esi,eax
-  0x29027a10    16  3b258c182109   cmp esp,[0x921188c]
-  0x29027a16    22  7305           jnc 29  (0x29027a1d)
-  0x29027a18    24  e8a38cfeff     call 0x290106c0             ;; code: STUB, StackCheckStub, minor: 0
-  0x29027a1d    29  8b4508         mov eax,[ebp+0x8]
-  0x29027a20    32  a801           test al,0x1
-  0x29027a22    34  0f85f4000000   jnz 284  (0x29027b1c)
-  0x29027a28    40  d1f8           sar eax,1
-  0x29027a2a    42  83f801         cmp eax,0x1                 <-- if (n>1) goto 61
-  0x29027a2d    45  0f8f0a000000   jg 61  (0x29027a3d)
-  0x29027a33    51  b902000000     mov ecx,0x2
-  0x29027a38    56  e9d7000000     jmp 276  (0x29027b14)       <-- if !(n>1) goto 276
-  0x29027a3d    61  8b4df4         mov ecx,[ebp+0xf4]          <-- // 以降が p = n * FactIf(n-1);に該当する
-  0x29027a40    64  8b4913         mov ecx,[ecx+0x13]
-  0x29027a43    67  83e801         sub eax,0x1                 <-- eax = n - 1
-  0x29027a46    70  8b15d490e023   mov edx,[0x23e090d4]        ;; global property cell  // 呼び出すproperty callのチェック
-  0x29027a4c    76  81fad11b9446   cmp edx,0x46941bd1          ;; object: 0x46941bd1 <JS Function FactIf> <--想定するFactIf
-  0x29027a52    82  0f853206de20   jnz 0x49e0808a              ;; deoptimization bailout 1 //想定するcallでない場合、bailout
-  0x29027a58    88  8b4913         mov ecx,[ecx+0x13]          <-- 隠れ引数。thisポインタでも設定してるんでしょうかね？
-  0x29027a5b    91  fff1           push ecx
-  0x29027a5d    93  03c0           add eax,eax
-  0x29027a5f    95  0f80e6000000   jo 331  (0x29027b4b)        <-- まさかのオーバーフローチェック。
-  0x29027a65   101  fff0           push eax                    <-- argument set n
-  0x29027a67   103  bfd11b9446     mov edi,0x46941bd1          ;; object: 0x46941bd1 <JS Function FactIf> <--想定するFactIf
-  0x29027a6c   108  8b75fc         mov esi,[ebp+0xfc]
-  0x29027a6f   111  c6c102         mov_b cl,0x2
-  0x29027a72   114  e889ffffff     call 0  (0x29027a00)        ;; debug: position 57
-                                                               ;; code: OPTIMIZED_FUNCTION <-- たぶんここがFactIf()
-  0x29027a77   119  8b4d08         mov ecx,[ebp+0x8]
-  0x29027a7a   122  f6c101         test_b cl,0x1
-  0x29027a7d   125  7426           jz 165  (0x29027aa5)
-  0x29027a7f   127  8179ff2181b040 cmp [ecx+0xff],0x40b08121    ;; object: 0x40b08121 <Map(elements=1)>
-  0x29027a86   134  7416           jz 158  (0x29027a9e)
-  0x29027a88   136  81f991809046   cmp ecx,0x46908091          ;; object: 0x46908091 <undefined>
-  0x29027a8e   142  0f850a06de20   jnz 0x49e0809e              ;; deoptimization bailout 3
-  0x29027a94   148  f20f100d103d4608 movsd xmm1,[0x8463d10]
-  0x29027a9c   156  eb0f           jmp 173  (0x29027aad)
-  0x29027a9e   158  f20f104903     movsd xmm1,[ecx+0x3]        <-- load n
-  0x29027aa3   163  eb08           jmp 173  (0x29027aad)
-  0x29027aa5   165  d1f9           sar ecx,1
-  0x29027aa7   167  f20f2ac9       cvtsi2sd xmm1,ecx
-  0x29027aab   171  03c9           add ecx,ecx
-  0x29027aad   173  a801           test al,0x1
-  0x29027aaf   175  7425           jz 214  (0x29027ad6)
-  0x29027ab1   177  8178ff2181b040 cmp [eax+0xff],0x40b08121    ;; object: 0x40b08121 <Map(elements=1)>
-  0x29027ab8   184  7415           jz 207  (0x29027acf)
-  0x29027aba   186  3d91809046     cmp eax, 0x46908091         ;; object: 0x46908091 <undefined>
-  0x29027abf   191  0f85e305de20   jnz 0x49e080a8              ;; deoptimization bailout 4
-  0x29027ac5   197  f20f1015103d4608 movsd xmm2,[0x8463d10]
-  0x29027acd   205  eb0f           jmp 222  (0x29027ade)
-  0x29027acf   207  f20f105003     movsd xmm2,[eax+0x3]
-  0x29027ad4   212  eb08           jmp 222  (0x29027ade)
-  0x29027ad6   214  d1f8           sar eax,1
-  0x29027ad8   216  f20f2ad0       cvtsi2sd xmm2,eax
-  0x29027adc   220  03c0           add eax,eax
-  0x29027ade   222  f20f59ca       mulsd xmm1,xmm2             <-- n * FactIf(n-1);
-  0x29027ae2   226  8b0d94122109   mov ecx,[0x9211294]
-  0x29027ae8   232  89c8           mov eax,ecx
-  0x29027aea   234  83c00c         add eax,0xc
-  0x29027aed   237  0f82b9000000   jc 428  (0x29027bac)
-  0x29027af3   243  3b0598122109   cmp eax,[0x9211298]
-  0x29027af9   249  0f87ad000000   ja 428  (0x29027bac)
-  0x29027aff   255  890594122109   mov [0x9211294],eax
-  0x29027b05   261  83c101         add ecx,0x1
-  0x29027b08   264  c741ff2181b040 mov [ecx+0xff],0x40b08121    ;; object: 0x40b08121 <Map(elements=1)>
-  0x29027b0f   271  f20f114903     movsd [ecx+0x3],xmm1
-  0x29027b14   276  89c8           mov eax,ecx                 <-- if (n<=0)の場合はここに飛んでくる ecx = 0x2
-  0x29027b16   278  89ec           mov esp,ebp
-  0x29027b18   280  5d             pop ebp
-  0x29027b19   281  c20800         ret 0x8                     <-- return p
-  0x29027b1c   284  8178ff2181b040 cmp [eax+0xff],0x40b08121    ;; object: 0x40b08121 <Map(elements=1)>
-  0x29027b23   291  0f858905de20   jnz 0x49e080b2              ;; deoptimization bailout 5
-  0x29027b29   297  f20f104003     movsd xmm0,[eax+0x3]
-  0x29027b2e   302  f20f2cc0       cvttsd2si eax,xmm0
-  0x29027b32   306  f20f2ac8       cvtsi2sd xmm1,eax
-  0x29027b36   310  660f2ec1       ucomisd xmm0,xmm1
-  0x29027b3a   314  0f857205de20   jnz 0x49e080b2              ;; deoptimization bailout 5
-  0x29027b40   320  0f8a6c05de20   jpe 0x49e080b2              ;; deoptimization bailout 5
-  0x29027b46   326  e9dffeffff     jmp 42  (0x29027a2a)
-  0x29027b4b   331  60             pushad                      <-- overflowした場合はここに飛んでくる
-  0x29027b4c   332  d1f8           sar eax,1
-  0x29027b4e   334  3500000080     xor eax, 0x80000000
-  0x29027b53   339  f20f2ac0       cvtsi2sd xmm0,eax
-  0x29027b57   343  8b0594122109   mov eax,[0x9211294]
-  0x29027b5d   349  89c1           mov ecx,eax
-  0x29027b5f   351  83c10c         add ecx,0xc
-  0x29027b62   354  0f821e000000   jc 390  (0x29027b86)
-  0x29027b68   360  3b0d98122109   cmp ecx,[0x9211298]
-  0x29027b6e   366  0f8712000000   ja 390  (0x29027b86)
-  0x29027b74   372  890d94122109   mov [0x9211294],ecx
-  0x29027b7a   378  83c001         add eax,0x1
-  0x29027b7d   381  c740ff2181b040 mov [eax+0xff],0x40b08121    ;; object: 0x40b08121 <Map(elements=1)>
-  0x29027b84   388  eb17           jmp 413  (0x29027b9d)
-  0x29027b86   390  c744241c00000000 mov [esp+0x1c],0x0
-  0x29027b8e   398  8b75fc         mov esi,[ebp+0xfc]
-  0x29027b91   401  33c0           xor eax,eax
-  0x29027b93   403  bbfa8c2b08     mov ebx,0x82b8cfa
-  0x29027b98   408  e8030effff     call 0x290189a0             ;; code: STUB, CEntryStub, minor: 1
-  0x29027b9d   413  f20f114003     movsd [eax+0x3],xmm0
-  0x29027ba2   418  8944241c       mov [esp+0x1c],eax
-  0x29027ba6   422  61             popad
-  0x29027ba7   423  e9b9feffff     jmp 101  (0x29027a65)
-  0x29027bac   428  33c9           xor ecx,ecx
-  0x29027bae   430  60             pushad
-  0x29027baf   431  8b75fc         mov esi,[ebp+0xfc]
-  0x29027bb2   434  33c0           xor eax,eax
-  0x29027bb4   436  bbfa8c2b08     mov ebx,0x82b8cfa
-  0x29027bb9   441  e8e20dffff     call 0x290189a0             ;; code: STUB, CEntryStub, minor: 1
-  0x29027bbe   446  89442418       mov [esp+0x18],eax
-  0x29027bc2   450  61             popad
-  0x29027bc3   451  e947ffffff     jmp 271  (0x29027b0f)
-  0x29027bc8   456  90             nop
-  0x29027bc9   457  90             nop
-  0x29027bca   458  90             nop
-  0x29027bcb   459  90             nop
-  0x29027bcc   460  90             nop
-  0x29027bcd   461  0f1f00         nop
-
-  Deoptimization Input Data (deopt points = 6)
-   index  ast id    argc     pc             
-       0       3       0     29
-       1      46       0     -1
-       2      28       0    119
-       3      28       0     -1
-       4      28       0     -1
-       5       3       0     -1
-  
-  Safepoints (size = 48)
-  0x29027a1d    29  1 (sp -> fp)       0
-  0x29027a77   119  0 (sp -> fp)       2
-  0x29027b9d   413  0 | eax (sp -> fp)  <none>
-  0x29027bbe   446  0 (sp -> fp)  <none>
+.. literalinclude:: out/fact_if.FactIF.crankshaft.code
 
 まとめ
 ================================================================================
