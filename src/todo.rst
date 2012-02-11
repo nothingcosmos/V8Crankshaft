@@ -80,6 +80,11 @@ smiのguardが冗長に思うのだが、smiのguardがlithiumの段階でもmac
 
 実際にコーディングしてみるか？
 
+rangecheckで、特にsmiによるガードに対して、cfgベースにrangeを伝搬して冗長なガードの除去を行っているらしい。
+
+llvmの奴は、latticeを使ってif分岐全般を除去することを目的にしているので、
+オーバースペックかも。合計3kstepくらいだし。
+
 (2-2) ::
 
   deoptimizeが発生後、full-codegenへ戻るが、その後の挙動はどうなるのか。

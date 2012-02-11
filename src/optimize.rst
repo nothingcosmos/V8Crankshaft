@@ -142,6 +142,15 @@ HGraphBuilder::TryInline()
 HRangeAnalysis::Analyze
 ================================================================================
 
+値の範囲チェックを解析する
+
+その目的はsmiやdoubleのガードの除去
+
+cfgのthen/elseに値範囲を伝搬可能で、dtを元にbbを走査する。
+
+HRangeAnalysis::Analyze()
+
+
 
 HGraph::Canonicalize()
 ================================================================================
@@ -174,8 +183,6 @@ instr->DeleteAndReplaceWith(value)の詳細 ::
 ReplaceAllUsesWithとか、llvmを参考にしてるように思う。
 
 でも中間表現はgraphベースだから、最適化のアルゴリズムは難しい。
-
-
 
 
 
